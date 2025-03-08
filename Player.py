@@ -12,28 +12,15 @@ class Player:
         self.shipImage = simplegui.load_image(shipImageURL)
         self.widthHeightDest = (100, 100)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.current_rotation = startingRotation
-        self.facing = "Right"
-        self.initialRot = startingRotation
+        self.current_rotation = -math.pi/2
 
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.current_rotation)
         
-    def turn(self, degrees, facing):
-        speed = degrees/32
-        
-        if self.current_rotation < degrees:
-            self.current_rotation -= speed
-            if self.current_rotation > degrees:
-                self.current_rotation = degrees
-                self.facing = facing
-        elif self.current_rotation > degrees:
-            self.current_rotation += speed
-            if self.current_rotation < degrees:
-                self.current_rotation = degrees
-                self.facing = facing
+    def turn(self, degrees):
+        self.current_rotation = degrees
                 
     def update(self):
         self.pos.add(self.vel)
@@ -103,24 +90,21 @@ class Interaction:
     def update(self, canvas):
         if self.keyboard.up:
             self.player.vel.add(Vector(0, -1))
-            if not self.player.facing == "Up":
-                self.player.turn(-math.pi/2, "Up")
+            self.player.turn(-math.pi/2)
         if self.keyboard.down:
             self.player.vel.add(Vector(0, 1))
-            if not self.player.facing == "Down":
-                self.player.turn(math.pi/2, "Down")
+            self.player.turn(math.pi/2)
         if self.keyboard.left:
             self.player.vel.add(Vector(-1, 0))
-            if not self.player.facing == "Left":
-                self.player.turn(-math.pi, "Left")
+            self.player.turn(-math.pi)
         if self.keyboard.right:
             self.player.vel.add(Vector(1, 0))
-            if not self.player.facing == "Right":
-                self.player.turn(math.pi, "Right")
+            self.player.turn(0)
 
 player = Player("Adnan", 
                 Vector(canvasWidth/2, canvasHeight - 100), 
-                "https://www.cs.rhul.ac.uk/home/znac614/cs1822/Spaceshooter/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Ship6.png")
+                "https://www.cs.rhul.ac.uk/home/znac614/cs1822/Spaceshooter/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Ship6.png",
+               -math.pi/2)
 kbd = Keyboard()
 inter = Interaction(player, kbd)
 
