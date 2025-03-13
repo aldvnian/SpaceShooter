@@ -1,12 +1,16 @@
 class Spritesheet:
-    def __init__(self, url, width, height, rows, columns):
+    def __init__(self, url, rows, columns, center_dest, size_drawn, rotation):
         self.url = url
         self.rows = rows
         self.columns = columns
-        self.orgSize = (width, height)
-        self._init_dimension()
-        self.frameIndex = [2, 1]
         self.image = simplegui.load_image(self.url)
+        self.orgSize = (self.image.get_width(), self.image.get_height())
+        self._init_dimension()
+        self.frameIndex = [0, 0]
+        self.centerDest = center_dest
+        self.rotation = rotation
+        self.sizeDrawn = size_drawn
+        self.clock = 0
         
     def _init_dimension(self):
         self.frameWidth = self.orgSize[0] / self.columns
@@ -21,7 +25,11 @@ class Spritesheet:
                 self.frameIndex[1] * self.frameHeight + self.frameCentreY
             )
             sourceSize = (self.frameWidth, self.frameHeight)
-            canvas.draw_image(self.image, sourceCentre, sourceSize, (350, 250), (100, 100))
+            canvas.draw_image(self.image, sourceCentre, sourceSize, self.centerDest, self.sizeDrawn, self.rotation)
+            self.clock += 1
+            if self.clock == 20:
+                self.next()
+                self.clock = 0
         
     def next(self):
         self.frameIndex[0] = (self.frameIndex[0] + 1) % self.columns
