@@ -1,32 +1,50 @@
 import simplegui, math
 from user304_rsf8mD0BOQ_1 import Vector
 
-canvasWidth = 700
+canvasWidth = 800
 canvasHeight = 600
 
 class Player:
-    def __init__(self, name, pos, shipImageURL, startingRotation):
+    def __init__(self, name, shipImageURL, startingRotation, canvasWidth, canvasHeight):
         self.name = name
-        self.pos = pos
+        self.pos = Vector(canvasWidth/2, canvasHeight - 100)
         self.vel = Vector()
         self.shipImage = simplegui.load_image(shipImageURL)
         self.widthHeightDest = (100, 100)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.current_rotation = -math.pi/2
+        self.currentRotation = -math.pi/2
+        self.borderRight = canvasWidth - self.shipImage.get_height()/2 + 10
+        self.borderLeft = self.shipImage.get_height()/2 - 10
+        self.borderUp = self.shipImage.get_height()/2 - 10
+        self.borderDown = canvasHeight - self.shipImage.get_height()/2 + 10
 
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
-        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.current_rotation)
+        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
         
     def turn(self, degrees):
-        self.current_rotation = degrees
+        self.currentRotation = degrees
                 
     def update(self):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.vel.multiply(0.85)
-                
+        
+    def inBorder(self):
+        if self.pos.x >= self.borderRight:
+            self.pos.x = self.borderRight
+            self.vel.x = 0
+        if self.pos.x <= self.borderLeft:
+            self.pos.x = self.borderLeft
+            self.vel.x = 0
+        if self.pos.y >= self.borderDown:
+            self.pos.y = self.borderDown
+            self.vel.y = 0
+        if self.pos.y <= self.borderUp:
+            self.pos.y = self.borderUp
+            self.vel.y = 0
+        
 class Keyboard:
     def __init__(self):
         self.right = False
@@ -89,22 +107,25 @@ class Interaction:
         
     def update(self, canvas):
         if self.keyboard.up:
+            self.player.inBorder()
             self.player.vel.add(Vector(0, -1))
             self.player.turn(-math.pi/2)
         if self.keyboard.down:
+            self.player.inBorder()
             self.player.vel.add(Vector(0, 1))
             self.player.turn(math.pi/2)
         if self.keyboard.left:
+            self.player.inBorder()
             self.player.vel.add(Vector(-1, 0))
             self.player.turn(-math.pi)
         if self.keyboard.right:
+            self.player.inBorder()
             self.player.vel.add(Vector(1, 0))
             self.player.turn(0)
 
 player = Player("Adnan", 
-                Vector(canvasWidth/2, canvasHeight - 100), 
                 "https://www.cs.rhul.ac.uk/home/znac614/cs1822/Spaceshooter/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Ship6.png",
-               -math.pi/2)
+               -math.pi/2, canvasWidth, canvasHeight)
 kbd = Keyboard()
 inter = Interaction(player, kbd)
 
