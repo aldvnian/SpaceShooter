@@ -1,4 +1,4 @@
-import simplegui, math
+import simplegui, math, Spritesheet
 from user304_rsf8mD0BOQ_1 import Vector
 
 canvasWidth = 800
@@ -7,29 +7,42 @@ canvasHeight = 600
 class Player:
     def __init__(self, name, shipImageURL, startingRotation, canvasWidth, canvasHeight):
         self.name = name
-        self.pos = Vector(canvasWidth/2, canvasHeight - 100)
+        self.pos = Vector(canvasWidth/2, canvasHeight/2)
         self.vel = Vector()
         self.shipImage = simplegui.load_image(shipImageURL)
-        self.widthHeightDest = (100, 100)
+        self.widthHeightDest = (70, 70)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.currentRotation = -math.pi/2
+        self.boostRotation = -math.pi/2
         self.borderRight = canvasWidth - self.shipImage.get_height()/2 + 10
         self.borderLeft = self.shipImage.get_height()/2 - 10
         self.borderUp = self.shipImage.get_height()/2 - 10
         self.borderDown = canvasHeight - self.shipImage.get_height()/2 + 10
+        self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
+                                1, 4, (self.pos.x, self.pos.y + 55), (40, 40), self.boostRotation)
 
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
+        self.boost.draw(canvas)
         
-    def turn(self, degrees):
+    def turn(self, degrees, direction):
         self.currentRotation = degrees
+        self.boost.rotation = degrees
+        if direction == "Up":
+            self.boost.centerDest = (self.pos.x, self.pos.y + 50)
+        elif direction == "Down":
+            self.boost.centerDest = (self.pos.x, self.pos.y - 50)
+        elif direction == "Left":
+            self.boost.centerDest = (self.pos.x + 50, self.pos.y)
+        else:
+            self.boost.centerDest = (self.pos.x - 50, self.pos.y)
                 
     def update(self):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.vel.multiply(0.85)
+        self.vel.multiply(0.73)
         
     def inBorder(self):
         if self.pos.x >= self.borderRight:
@@ -109,29 +122,29 @@ class Interaction:
         if self.keyboard.up:
             self.player.inBorder()
             self.player.vel.add(Vector(0, -1))
-            self.player.turn(-math.pi/2)
+            self.player.turn(-math.pi/2, "Up")
         if self.keyboard.down:
             self.player.inBorder()
             self.player.vel.add(Vector(0, 1))
-            self.player.turn(math.pi/2)
+            self.player.turn(math.pi/2, "Down")
         if self.keyboard.left:
             self.player.inBorder()
             self.player.vel.add(Vector(-1, 0))
-            self.player.turn(-math.pi)
+            self.player.turn(-math.pi, "Left")
         if self.keyboard.right:
             self.player.inBorder()
             self.player.vel.add(Vector(1, 0))
-            self.player.turn(0)
+            self.player.turn(0, "Right")
 
 player = Player("Adnan", 
-                "https://www.cs.rhul.ac.uk/home/znac614/cs1822/Spaceshooter/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Ship6.png",
+                "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
                -math.pi/2, canvasWidth, canvasHeight)
 kbd = Keyboard()
 inter = Interaction(player, kbd)
 
 def draw_handler(canvas):
-    inter.update(canvas)
     player.update()
+    inter.update(canvas)
     player.draw(canvas)
 
 frame = simplegui.create_frame('Player', canvasWidth, canvasHeight)
