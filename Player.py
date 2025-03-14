@@ -1,8 +1,4 @@
-import simplegui, math, Spritesheet
-from user304_rsf8mD0BOQ_1 import Vector
-
-canvasWidth = 800
-canvasHeight = 600
+import simplegui, math, Spreadsheet
 
 class Player:
     def __init__(self, name, shipImageURL, startingRotation, canvasWidth, canvasHeight):
@@ -18,6 +14,7 @@ class Player:
         self.borderLeft = self.shipImage.get_height()/2 - 10
         self.borderUp = self.shipImage.get_height()/2 - 10
         self.borderDown = canvasHeight - self.shipImage.get_height()/2 + 10
+        self.moving = False
         self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), self.boostRotation)
 
@@ -25,7 +22,8 @@ class Player:
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
-        self.boost.draw(canvas)
+        if self.moving:
+            self.boost.draw(canvas)
         
     def turn(self, degrees, direction):
         self.currentRotation = degrees
@@ -64,6 +62,7 @@ class Keyboard:
         self.left = False
         self.up = False
         self.down = False
+        self.space = False
         self.rightKeyDown = False
         self.leftKeyDown = False
         self.upKeyDown = False
@@ -90,6 +89,8 @@ class Keyboard:
                 self.up = False
             self.down = True
             self.downKeyDown = True
+        elif key == simplegui.KEY_MAP['space']:
+            self.space = True
 
     def keyUp(self, key):
         if key == simplegui.KEY_MAP['right']:
@@ -112,6 +113,8 @@ class Keyboard:
             self.down = False
             if self.upKeyDown:
                 self.up = True
+        elif key == simplegui.KEY_MAP['space']:
+            self.space = False
                 
 class Interaction:
     def __init__(self, player, keyboard):
@@ -123,18 +126,25 @@ class Interaction:
             self.player.inBorder()
             self.player.vel.add(Vector(0, -1))
             self.player.turn(-math.pi/2, "Up")
+            self.player.moving = True
         if self.keyboard.down:
             self.player.inBorder()
             self.player.vel.add(Vector(0, 1))
             self.player.turn(math.pi/2, "Down")
+            self.player.moving = True
         if self.keyboard.left:
             self.player.inBorder()
             self.player.vel.add(Vector(-1, 0))
             self.player.turn(-math.pi, "Left")
+            self.player.moving = True
         if self.keyboard.right:
             self.player.inBorder()
             self.player.vel.add(Vector(1, 0))
             self.player.turn(0, "Right")
+            self.player.moving = True
+        #if self.keyboard.space:
+        if not (self.keyboard.up or self.keyboard.down or self.keyboard.left or self.keyboard.right):
+            self.player.moving = False
 
 player = Player("Adnan", 
                 "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
