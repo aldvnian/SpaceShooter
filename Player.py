@@ -1,61 +1,53 @@
-import simplegui, math, Spreadsheet
+import simplegui, math
+from user304_rsf8mD0BOQ_1 import Vector
 
-class Player:
-    def __init__(self, name, shipImageURL, startingRotation, canvasWidth, canvasHeight):
-        self.name = name
-        self.pos = Vector(canvasWidth/2, canvasHeight/2)
-        self.vel = Vector()
-        self.shipImage = simplegui.load_image(shipImageURL)
-        self.widthHeightDest = (70, 70)
-        self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.currentRotation = -math.pi/2
-        self.boostRotation = -math.pi/2
-        self.borderRight = canvasWidth - self.shipImage.get_height()/2 + 10
-        self.borderLeft = self.shipImage.get_height()/2 - 10
-        self.borderUp = self.shipImage.get_height()/2 - 10
-        self.borderDown = canvasHeight - self.shipImage.get_height()/2 + 10
+canvasWidth = 800
+canvasHeight = 600
+
+class Player(Spaceship):
+    def __init__(self, shipImageURL, startingRotation, canvasWidth, canvasHeight):
+        super().__init__(shipImageURL, (canvasWidth/2, canvasHeight - 70), startingRotation, canvasWidth, canvasHeight)
         self.moving = False
         self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
-                                1, 4, (self.pos.x, self.pos.y + 55), (40, 40), self.boostRotation)
+                                1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
+        self.shot = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
+                               2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
+        self.borderRight = canvasWidth - self.widthHeightDest[0]/2
+        self.borderLeft = self.widthHeightDest[0]/2
+        self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
+        self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
+        self.shoot = False
 
     def draw(self, canvas):
-        centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
-        widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
-        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
+        super().draw(canvas)
+        print(self.shoot)
+        if self.shoot:
+            self.shot.draw(canvas, 5)
         if self.moving:
-            self.boost.draw(canvas)
+            self.boost.draw(canvas, "None")
         
-    def turn(self, degrees, direction):
-        self.currentRotation = degrees
-        self.boost.rotation = degrees
-        if direction == "Up":
-            self.boost.centerDest = (self.pos.x, self.pos.y + 50)
-        elif direction == "Down":
-            self.boost.centerDest = (self.pos.x, self.pos.y - 50)
-        elif direction == "Left":
-            self.boost.centerDest = (self.pos.x + 50, self.pos.y)
-        else:
-            self.boost.centerDest = (self.pos.x - 50, self.pos.y)
-                
+    def inBorder(self):
+        if self.pos.x > self.borderRight:
+            self.pos.x = self.borderRight
+            self.vel.x = 0
+        elif self.pos.x < self.borderLeft:
+            self.pos.x = self.borderLeft
+            self.vel.x = 0
+
+        if self.pos.y > self.borderDown:
+            self.pos.y = self.borderDown
+            self.vel.y = 0
+        elif self.pos.y < self.borderUp:
+            self.pos.y = self.borderUp
+            self.vel.y = 0
+            
     def update(self):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
+        self.boost.centreDest = (self.centreDest[0], self.centreDest[1] + 55)
+        self.shot.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
         self.vel.multiply(0.73)
-        
-    def inBorder(self):
-        if self.pos.x >= self.borderRight:
-            self.pos.x = self.borderRight
-            self.vel.x = 0
-        if self.pos.x <= self.borderLeft:
-            self.pos.x = self.borderLeft
-            self.vel.x = 0
-        if self.pos.y >= self.borderDown:
-            self.pos.y = self.borderDown
-            self.vel.y = 0
-        if self.pos.y <= self.borderUp:
-            self.pos.y = self.borderUp
-            self.vel.y = 0
-        
+
 class Keyboard:
     def __init__(self):
         self.right = False
@@ -122,32 +114,25 @@ class Interaction:
         self.keyboard = keyboard
         
     def update(self, canvas):
+        self.player.inBorder()
         if self.keyboard.up:
-            self.player.inBorder()
             self.player.vel.add(Vector(0, -1))
-            self.player.turn(-math.pi/2, "Up")
             self.player.moving = True
-        if self.keyboard.down:
-            self.player.inBorder()
-            self.player.vel.add(Vector(0, 1))
-            self.player.turn(math.pi/2, "Down")
-            self.player.moving = True
-        if self.keyboard.left:
-            self.player.inBorder()
-            self.player.vel.add(Vector(-1, 0))
-            self.player.turn(-math.pi, "Left")
-            self.player.moving = True
-        if self.keyboard.right:
-            self.player.inBorder()
-            self.player.vel.add(Vector(1, 0))
-            self.player.turn(0, "Right")
-            self.player.moving = True
-        #if self.keyboard.space:
-        if not (self.keyboard.up or self.keyboard.down or self.keyboard.left or self.keyboard.right):
+        else:
             self.player.moving = False
+        if self.keyboard.down:
+            self.player.vel.add(Vector(0, 1))
+        if self.keyboard.left:
+            self.player.vel.add(Vector(-1, 0))
+        if self.keyboard.right:
+            self.player.vel.add(Vector(1, 0))
+        if self.keyboard.space:
+            self.player.shoot = True
+        else:
+            self.player.shoot = False
 
-player = Player("Adnan", 
-                "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
+
+player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
                -math.pi/2, canvasWidth, canvasHeight)
 kbd = Keyboard()
 inter = Interaction(player, kbd)
