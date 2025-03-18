@@ -25,7 +25,7 @@ class Spritesheet:
         self.frameCentreX = self.frameWidth / 2
         self.frameCentreY = self.frameHeight / 2
         
-    def draw(self, canvas, limit):
+    def draw(self, canvas):
         if self.orgSize[0] > 0:
             sourceCentre = (
                 self.frameIndex[0] * self.frameWidth + self.frameCentreX,
@@ -34,16 +34,9 @@ class Spritesheet:
             sourceSize = (self.frameWidth, self.frameHeight)
             canvas.draw_image(self.image, sourceCentre, sourceSize, self.centreDest, self.sizeDrawn, self.rotation)
             self.clock += 1
-            if limit == "None":
-                if self.clock == 20:
-                    self.next()
-                    self.clock = 0
-            elif not limit == 0:
-                print(limit)
-                if self.clock == 20:
-                    self.next()
-                    limit -= 1
-                    self.clock = 0
+            if self.clock == 20:
+                self.next()
+                self.clock = 0
         
     def next(self):
         if self.frameIndex[1] == self.rows - 1 and self.rows != 1:
@@ -75,26 +68,38 @@ class Spaceship():
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.vel.multiply(0.73)
         
+class Bullet:
+    def __init__(self):
+        pass
+        
 class Player(Spaceship):
     def __init__(self, shipImageURL, startingRotation, canvasWidth, canvasHeight):
         super().__init__(shipImageURL, (canvasWidth/2, canvasHeight - 70), startingRotation, canvasWidth, canvasHeight)
         self.moving = False
         self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
-        self.shot = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
+        self.shot_animation = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
                                2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
+        self.shot = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png")
+        self.shot_pos = (self.pos.x, self.pos.y - 60)
         self.borderRight = canvasWidth - self.widthHeightDest[0]/2
         self.borderLeft = self.widthHeightDest[0]/2
         self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
         self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
         self.shoot = False
+        
 
     def draw(self, canvas):
         super().draw(canvas)
-        if self.shoot:
-            self.shot.draw(canvas, 5)
         if self.moving:
-            self.boost.draw(canvas, "None")
+            self.boost.draw(canvas)
+        if self.shoot:
+            print(self.shot.get_width()/2)
+            canvas.draw_image(self.shot,
+                             (self.shot.get_width()/2, self.shot.get_height()/2),
+                             (self.shot.get_width(), self.shot.get_height()),
+                             self.shot_pos, (70, 70), -math.pi/2)
+            self.shot_pos = (self.shot_pos[0], self.shot_pos[1] - 1)
         
     def inBorder(self):
         if self.pos.x > self.borderRight:
@@ -115,7 +120,7 @@ class Player(Spaceship):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.boost.centreDest = (self.centreDest[0], self.centreDest[1] + 55)
-        self.shot.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
+        self.shot_animation.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
         self.vel.multiply(0.73)
 
 class Keyboard:
