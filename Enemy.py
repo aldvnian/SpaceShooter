@@ -4,29 +4,30 @@ from user304_rsf8mD0BOQ_1 import Vector
 canvasWidth = 700
 canvasHeight = 600
 
-class Enemy:
-    def __init__(self, pos, enemyShipImageURL):
-        self.pos = pos
-        self.vel = Vector()
-        self.enemyShipImage = simplegui.load_image(enemyShipImageURL)
+class Enemy(Spaceship):
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight):
+        super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
         self.enemyWidthHeightDest = (65, 65)
-        self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.current_rotation = -math.pi/2
+        self.current_rotation = math.pi/2
                
     def draw(self, canvas):
-        centre = (self.enemyShipImage.get_width()/2, self.enemyShipImage.get_height()/2)
-        widthHeightSource = (self.enemyShipImage.get_width(), self.enemyShipImage.get_height())
-        canvas.draw_image(self.enemyShipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
+        centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
+        widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
+        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
 
     def update(self):
-        self.pos.add(self.vel)
-        self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
-        self.vel.multiply(0.2)
+        super().update()
 
     def turn(self, degrees):
         self.current_rotation = degrees
 
-enemy = Enemy(Vector(canvasWidth/2, canvasHeight - 550 ), "https://www.cs.rhul.ac.uk/home/znac614/cs1822/Spaceshooter/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png")
+enemy = Enemy(
+    (canvasWidth/2, canvasHeight - 550),  
+    "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+    math.pi/2,
+    canvasWidth,
+    canvasHeight
+)
 
 def draw_handler(canvas):
     enemy.update()
