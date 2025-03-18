@@ -1,7 +1,7 @@
 import simplegui, math
 from user304_rsf8mD0BOQ_1 import Vector
 
-canvasWidth = 800
+canvasWidth = 600
 canvasHeight = 600
 
 class Spritesheet:
@@ -69,8 +69,24 @@ class Spaceship():
         self.vel.multiply(0.73)
         
 class Bullet:
-    def __init__(self):
+    def __init__(self, imgURL, centreDest, size, rotation):
+        self.image = simplegui.load_image(imgURL)
+        self.pos = centreDest
+        self.size = size
+        self.rotation = rotation
+        
+    def draw(self, canvas):
+        canvas.draw_image(self.image, (self.image.get_width()/2, self.image.get_height()/2),
+                         (self.image.get_width(), self.image.get_height()),
+                         self.pos, (70, 70),
+                         self.rotation)
+        
+    def update(self, posAdder):
+        self.pos[1] = self.pos[1] + posAdder
+        
+    def animation(self):
         pass
+        
         
 class Player(Spaceship):
     def __init__(self, shipImageURL, startingRotation, canvasWidth, canvasHeight):
@@ -80,13 +96,12 @@ class Player(Spaceship):
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
         self.shot_animation = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
                                2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
-        self.shot = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png")
-        self.shot_pos = (self.pos.x, self.pos.y - 60)
         self.borderRight = canvasWidth - self.widthHeightDest[0]/2
         self.borderLeft = self.widthHeightDest[0]/2
         self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
         self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
         self.shoot = False
+        self.shots = []
         
 
     def draw(self, canvas):
@@ -94,12 +109,17 @@ class Player(Spaceship):
         if self.moving:
             self.boost.draw(canvas)
         if self.shoot:
-            print(self.shot.get_width()/2)
-            canvas.draw_image(self.shot,
-                             (self.shot.get_width()/2, self.shot.get_height()/2),
-                             (self.shot.get_width(), self.shot.get_height()),
-                             self.shot_pos, (70, 70), -math.pi/2)
-            self.shot_pos = (self.shot_pos[0], self.shot_pos[1] - 1)
+            for bullet in self.shots:
+                bullet.draw(canvas)
+    
+    def loadBullet(self):
+        self.shots.append(Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
+                                    (self.pos.x, self.pos.y - 70),
+                                    (70, 70),
+                                    -math.pi/2))
+    
+    def removeBullet(self, bullet):
+        self.shots.remove(bullet)
         
     def inBorder(self):
         if self.pos.x > self.borderRight:
@@ -202,7 +222,7 @@ class Interaction:
         if self.keyboard.right:
             self.player.vel.add(Vector(1, 0))
         if self.keyboard.space:
-            self.player.shoot = True
+            self.player.load
 
 
 player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
