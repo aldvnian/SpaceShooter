@@ -18,9 +18,6 @@ class Enemy(Spaceship):
     def update(self):
         super().update()
 
-    def turn(self, degrees):
-        self.current_rotation = degrees
-
 enemy = Enemy(
     (canvasWidth/2, canvasHeight - 550),  
     "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
