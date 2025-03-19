@@ -1,5 +1,3 @@
-import simplegui
-
 class Spritesheet:
     def __init__(self, url, rows, columns, center_dest, size_drawn, rotation, num_frames):
         self.url = url
@@ -21,7 +19,7 @@ class Spritesheet:
         self.frameCentreX = self.frameWidth / 2
         self.frameCentreY = self.frameHeight / 2
         
-    def draw(self, canvas, limit):
+    def draw(self, canvas):
         if self.orgSize[0] > 0:
             sourceCentre = (
                 self.frameIndex[0] * self.frameWidth + self.frameCentreX,
@@ -30,15 +28,9 @@ class Spritesheet:
             sourceSize = (self.frameWidth, self.frameHeight)
             canvas.draw_image(self.image, sourceCentre, sourceSize, self.centreDest, self.sizeDrawn, self.rotation)
             self.clock += 1
-            if limit == "None":
-                if self.clock == 20:
-                    self.next()
-                    self.clock = 0
-            elif not limit == 0:
-                if self.clock == 20:
-                    self.next()
-                    limit -= 1
-                    self.clock = 0
+            if self.clock == 20:
+                self.next()
+                self.clock = 0
         
     def next(self):
         if self.frameIndex[1] == self.rows - 1 and self.rows != 1:
