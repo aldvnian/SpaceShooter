@@ -43,3 +43,27 @@ class Game:
         
         return (playerLeft <= bulletX <= playerRight and playerBack <= bulletY <= playerFront)
     
+#def draw_handler(canvas):
+#    canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
+#                     (background.get_width(), background.get_height()),
+#                    (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
+   
+#    inter.update(canvas)
+    
+#    if enemy.alive:
+#        enemy.update()
+#        enemy.draw(canvas)
+        
+#    for bullet in player.shots[:]:
+#        if checkEnemyCollision(bullet.pos, enemy):
+#            enemy.alive = False
+#            player.removeBullet(bullet)
+            
+#    if player.alive:
+#        player.draw(canvas)
+#        player.update()
+        
+#    for bullet in enemy.enemyBullets[:]:
+#        if checkPlayerCollision(bullet.pos, player):
+#            player.alive = False  
+#            enemy.removeBullet(bullet)
