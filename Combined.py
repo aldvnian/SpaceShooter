@@ -227,7 +227,7 @@ class Interaction:
             self.player.vel.add(Vector(1, 0))
         if self.keyboard.space:
             if not self.space_down:
-                if self.bullet_timer >= 30:
+                if self.bullet_timer >= 40:
                     self.player.loadBullet()
                     self.player.shoot = True
                     self.bullet_timer = 0
