@@ -1,7 +1,7 @@
 import simplegui, math
 from user304_rsf8mD0BOQ_1 import Vector
 
-canvasWidth = 600
+canvasWidth = 800
 canvasHeight = 600
 
 class Spritesheet:
@@ -112,7 +112,7 @@ class Player(Spaceship):
         if self.shoot:
             for bullet in self.shots:
                 bullet.draw(canvas)
-                bullet.update(-2)
+                bullet.update(-4)
     
     def loadBullet(self):
         self.shots.append(Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
@@ -210,6 +210,7 @@ class Interaction:
         self.player = player
         self.keyboard = keyboard
         self.bullet_timer = 0
+        self.space_down = False
         
     def update(self, canvas):
         self.player.inBorder()
@@ -225,10 +226,14 @@ class Interaction:
         if self.keyboard.right:
             self.player.vel.add(Vector(1, 0))
         if self.keyboard.space:
-            if self.bullet_timer >= 60:
-                self.player.loadBullet()
-                self.player.shoot = True
-                self.bullet_timer = 0
+            if not self.space_down:
+                if self.bullet_timer >= 30:
+                    self.player.loadBullet()
+                    self.player.shoot = True
+                    self.bullet_timer = 0
+                    self.space_down = True
+        else:
+            self.space_down = False
         self.bullet_timer += 1
 
 
@@ -236,8 +241,12 @@ player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101
                -math.pi/2, canvasWidth, canvasHeight)
 kbd = Keyboard()
 inter = Interaction(player, kbd)
+background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
 
 def draw_handler(canvas):
+    canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
+                     (background.get_width(), background.get_height()),
+                     (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
     player.update()
     inter.update(canvas)
     player.draw(canvas)
