@@ -103,7 +103,7 @@ class Player(Spaceship):
         self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
         self.shoot = False
         self.shots = []
-        
+        self.alive = True
 
     def draw(self, canvas):
         super().draw(canvas)
@@ -145,6 +145,46 @@ class Player(Spaceship):
         self.shot_animation.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
         self.vel.multiply(0.73)
 
+        
+class Enemy(Spaceship):
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight):
+        super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
+        self.enemyWidthHeightDest = (65, 65)
+        self.current_rotation = math.pi/2
+        self.enemyBullets = []
+        self.shotsDelay = 1000
+        self.timer = simplegui.create_timer(self.shotsDelay, self.loadBullet)
+        self.timer.start()
+        self.alive = True
+               
+    def draw(self, canvas):
+        centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
+        widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
+        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
+        for bullet in self.enemyBullets:
+            bullet.draw(canvas)
+
+        
+    def loadBullet(self):
+        newEnemyBullet = Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot1/shot1_exp1.png",
+                                    (self.pos.x, self.pos.y + 50),
+                                    (30, 30),
+                                    -math.pi/2
+        )
+        self.enemyBullets.append(newEnemyBullet)
+        
+    def removeBullet(self, bullet):
+        if bullet in self.enemyBullets:
+            self.enemyBullets.remove(bullet)
+    
+    def update(self):
+        super().update()
+        for bullet in self.enemyBullets[:]:
+            bullet.update(4)
+            if bullet.pos[1] > canvasHeight:
+                self.removeBullet(bullet)
+          
+        
 class Keyboard:
     def __init__(self):
         self.right = False
@@ -243,14 +283,68 @@ kbd = Keyboard()
 inter = Interaction(player, kbd)
 background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
 
+
+enemy = Enemy(
+    (canvasWidth/2, canvasHeight - 550),  
+    "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+    math.pi/2,
+    canvasWidth,
+    canvasHeight
+) 
+def checkPlayerCollision(bulletPos,player):
+        if player.alive == False:
+            return False
+        
+        playerWidth, playerHeight = player.widthHeightDest
+        playerLeft = player.pos.x - playerWidth/2
+        playerRight = player.pos.x + playerWidth/2
+        playerFront = player.pos.y + playerHeight/2
+        playerBack = player.pos.y - playerHeight/2
+        
+        bulletX, bulletY = bulletPos
+        
+        return (playerLeft <= bulletX <= playerRight and playerBack <= bulletY <= playerFront)
+    
+def checkEnemyCollision(bulletPos, enemy):
+        if enemy.alive == False:
+            return False
+        
+        enemyWidth, enemyHeight = enemy.enemyWidthHeightDest
+        enemyLeft = enemy.pos.x - enemyWidth/2
+        enemyRight = enemy.pos.x + enemyWidth/2
+        enemyFront = enemy.pos.y + enemyHeight/2
+        enemyBack = enemy.pos.y - enemyHeight/2
+        
+        bulletX, bulletY = bulletPos
+        
+        return (enemyLeft <= bulletX <= enemyRight and enemyBack <= bulletY <= enemyFront)
+    
 def draw_handler(canvas):
     canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
                      (background.get_width(), background.get_height()),
                      (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
-    player.update()
+   
     inter.update(canvas)
-    player.draw(canvas)
+    
+    if enemy.alive:
+        enemy.update()
+        enemy.draw(canvas)
+        
+    for bullet in player.shots[:]:
+        if checkEnemyCollision(bullet.pos, enemy):
+            enemy.alive = False
+            player.removeBullet(bullet)
+            
+    if player.alive:
+        player.draw(canvas)
+        player.update()
+        
+    for bullet in enemy.enemyBullets[:]:
+        if checkPlayerCollision(bullet.pos, player):
+            player.alive = False  
+            enemy.removeBullet(bullet)
 
+        
 frame = simplegui.create_frame('Player', canvasWidth, canvasHeight)
 frame.set_canvas_background('black')
 frame.set_draw_handler(draw_handler)
