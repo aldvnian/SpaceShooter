@@ -113,12 +113,12 @@ class Player(Spaceship):
             bullet.draw(canvas)
     
     def loadBullet(self):
-        new_bullet = Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
+        newBullet = Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
                                     (self.pos.x, self.pos.y - 45),
                                     (100, 80),
                                     -math.pi/2
         )
-        self.shots.append(new_bullet)
+        self.shots.append(newBullet)
     
     def removeBullet(self, bullet):
         if bullet in self.shots:
