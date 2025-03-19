@@ -51,7 +51,7 @@ class Spaceship():
         self.pos = Vector(pos[0], pos[1])
         self.vel = Vector()
         self.shipImage = simplegui.load_image(shipImageURL)
-        self.widthHeightDest = (70, 70)
+        self.widthHeightDest = (90, 90)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.currentRotation = startingRotation
 
@@ -76,13 +76,14 @@ class Bullet:
         self.rotation = rotation
         
     def draw(self, canvas):
-        canvas.draw_image(self.image, (self.image.get_width()/2, self.image.get_height()/2),
-                         (self.image.get_width(), self.image.get_height()),
-                         self.pos, (70, 70),
-                         self.rotation)
+        if self.image.get_width() > 0:
+            canvas.draw_image(self.image, (self.image.get_width()/2, self.image.get_height()/2),
+                             (self.image.get_width(), self.image.get_height()),
+                             self.pos, self.size,
+                             self.rotation)
         
     def update(self, posAdder):
-        self.pos[1] = self.pos[1] + posAdder
+        self.pos = (self.pos[0], self.pos[1] + posAdder)
         
     def animation(self):
         pass
@@ -111,11 +112,12 @@ class Player(Spaceship):
         if self.shoot:
             for bullet in self.shots:
                 bullet.draw(canvas)
+                bullet.update(-2)
     
     def loadBullet(self):
         self.shots.append(Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
                                     (self.pos.x, self.pos.y - 70),
-                                    (70, 70),
+                                    (120, 120),
                                     -math.pi/2))
     
     def removeBullet(self, bullet):
@@ -207,6 +209,7 @@ class Interaction:
     def __init__(self, player, keyboard):
         self.player = player
         self.keyboard = keyboard
+        self.bullet_timer = 0
         
     def update(self, canvas):
         self.player.inBorder()
@@ -222,7 +225,11 @@ class Interaction:
         if self.keyboard.right:
             self.player.vel.add(Vector(1, 0))
         if self.keyboard.space:
-            self.player.load
+            if self.bullet_timer >= 60:
+                self.player.loadBullet()
+                self.player.shoot = True
+                self.bullet_timer = 0
+        self.bullet_timer += 1
 
 
 player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
