@@ -104,6 +104,7 @@ class Player(Spaceship):
         self.shoot = False
         self.shots = []
         self.alive = True
+        self.health = 5
 
     def draw(self, canvas):
         super().draw(canvas)
@@ -147,7 +148,7 @@ class Player(Spaceship):
 
         
 class Enemy(Spaceship):
-    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight):
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health):
         super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
         self.enemyWidthHeightDest = (65, 65)
         self.current_rotation = math.pi/2
@@ -156,6 +157,7 @@ class Enemy(Spaceship):
         self.timer = simplegui.create_timer(self.shotsDelay, self.loadBullet)
         self.timer.start()
         self.alive = True
+        self.health = health
                
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
@@ -289,35 +291,22 @@ enemy = Enemy(
     "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
     math.pi/2,
     canvasWidth,
-    canvasHeight
+    canvasHeight,
+    1
 ) 
-def checkPlayerCollision(bulletPos,player):
-        if player.alive == False:
+def checkShipCollision(bulletPos, ship):
+        if ship.alive == False:
             return False
         
-        playerWidth, playerHeight = player.widthHeightDest
-        playerLeft = player.pos.x - playerWidth/2
-        playerRight = player.pos.x + playerWidth/2
-        playerFront = player.pos.y + playerHeight/2
-        playerBack = player.pos.y - playerHeight/2
+        shipWidth, shipHeight = ship.widthHeightDest
+        shipLeft = ship.pos.x - shipWidth/2
+        shipRight = ship.pos.x + shipWidth/2
+        shipFront = ship.pos.y + shipHeight/2
+        shipBack = ship.pos.y - shipHeight/2
         
         bulletX, bulletY = bulletPos
         
-        return (playerLeft <= bulletX <= playerRight and playerBack <= bulletY <= playerFront)
-    
-def checkEnemyCollision(bulletPos, enemy):
-        if enemy.alive == False:
-            return False
-        
-        enemyWidth, enemyHeight = enemy.enemyWidthHeightDest
-        enemyLeft = enemy.pos.x - enemyWidth/2
-        enemyRight = enemy.pos.x + enemyWidth/2
-        enemyFront = enemy.pos.y + enemyHeight/2
-        enemyBack = enemy.pos.y - enemyHeight/2
-        
-        bulletX, bulletY = bulletPos
-        
-        return (enemyLeft <= bulletX <= enemyRight and enemyBack <= bulletY <= enemyFront)
+        return (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront)
     
 def draw_handler(canvas):
     canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
@@ -330,18 +319,22 @@ def draw_handler(canvas):
         enemy.update()
         enemy.draw(canvas)
         
-    for bullet in player.shots[:]:
-        if checkEnemyCollision(bullet.pos, enemy):
-            enemy.alive = False
+    for bullet in player.shots:
+        if checkShipCollision(bullet.pos, enemy):
+            enemy.health -= 1
+            if enemy.health == 0:
+                enemy.alive = False
             player.removeBullet(bullet)
             
     if player.alive:
         player.draw(canvas)
         player.update()
         
-    for bullet in enemy.enemyBullets[:]:
-        if checkPlayerCollision(bullet.pos, player):
-            player.alive = False  
+    for bullet in enemy.enemyBullets:
+        if checkShipCollision(bullet.pos, player):
+            player.health -= 1
+            if player.health == 0:
+                player.alive = False
             enemy.removeBullet(bullet)
 
         
