@@ -22,10 +22,10 @@ instructions = [
 ]
 
 # Start button settings
-btn_width, btn_height = 100, 40
-btn_x = (width - btn_width) // 2
-btn_y = 240
-btn_text = "Start"
+button_width, button_height = 100, 40
+button_x = (width - button_width) // 2
+button_y = 240
+button_text = "Start"
 
 def draw(canvas):
     """Draws everything on the screen."""
@@ -55,14 +55,14 @@ def draw(canvas):
 
     # Draw start button
     canvas.draw_polygon(
-        [(btn_x, btn_y), (btn_x + btn_width, btn_y), 
-         (btn_x + btn_width, btn_y + btn_height), (btn_x, btn_y + btn_height)], 
+        [(button_x, button_y), (button_x + button_width, button_y), 
+         (button_x + button_width, button_y + button_height), (button_x, button_y + button_height)], 
         2, "White", "Gray"
     )
 
     # Draw button text
-    text_width = frame.get_canvas_textwidth(btn_text, 20, title_font)
-    canvas.draw_text(btn_text, [(btn_x + (btn_width - text_width) / 2), btn_y + 28], 20, "White", title_font)
+    text_width = frame.get_canvas_textwidth(button_text, 20, title_font)
+    canvas.draw_text(button_text, [(button_x + (button_width - text_width) / 2), button_y + 28], 20, "White", title_font)
 
 def click(pos):
     """Handles button clicks."""
