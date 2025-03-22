@@ -9,11 +9,11 @@ background_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4n
 background = simplegui.load_image(background_url)
 
 # Button settings
-btn_width = 120
-btn_height = 40
-btn_x = (WIDTH - btn_width) // 2
-btn_y = 210
-btn_text = "Play Again"
+button_width = 120
+button_height = 40
+button_x = (WIDTH - button_width) // 2
+button_y = 210
+button_text = "Play Again"
 
 # Score tracker
 class Score:
@@ -57,21 +57,21 @@ def draw(canvas):
 
     # Button
     canvas.draw_polygon(
-        [(btn_x, btn_y),
-         (btn_x + btn_width, btn_y),
-         (btn_x + btn_width, btn_y + btn_height),
-         (btn_x, btn_y + btn_height)],
+        [(button_x, button_y),
+         (button_x + button_width, button_y),
+         (button_x + button_width, button_y + button_height),
+         (button_x, button_y + button_height)],
         2, "White", "Gray"
     )
 
     text_size = 20
-    text_width = frame.get_canvas_textwidth(btn_text, text_size, "monospace")
-    canvas.draw_text(btn_text, ((btn_x + (btn_width - text_width) // 2), btn_y + 28), text_size, "White", "monospace")
+    text_width = frame.get_canvas_textwidth(button_text, text_size, "monospace")
+    canvas.draw_text(button_text, ((button_x + (button_width - text_width) // 2), button_y + 28), text_size, "White", "monospace")
 
 # Handle mouse click
 def click(pos):
     x, y = pos
-    if btn_x <= x <= btn_x + btn_width and btn_y <= y <= btn_y + btn_height:
+    if button_x <= x <= button_x + button_width and button_y <= y <= button_y + button_height:
         print("Play Again clicked")
         score.reset()
         # You can add logic to go back to start screen here
