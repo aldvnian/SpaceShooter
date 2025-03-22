@@ -1,38 +1,39 @@
 import simplegui
 
-# Screen size
+# Canvas size
 WIDTH = 400
 HEIGHT = 300
 
-# Background image
-bg_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
-background = simplegui.load_image(bg_url)
+# Load background image
+background_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
+background = simplegui.load_image(background_url)
 
-# Button setup
-button_w, button_h = 120, 40
-button_x = (WIDTH - button_w) // 2
-button_y = 210
-button_label = "Play Again"
+# Button settings
+btn_width = 120
+btn_height = 40
+btn_x = (WIDTH - btn_width) // 2
+btn_y = 210
+btn_text = "Play Again"
 
 # Score tracker
-class TotalScore:
+class Score:
     def __init__(self):
         self.value = 0
 
     def reset(self):
         self.value = 0
 
-    def add(self, points):
-        self.value += points
-
     def get(self):
         return self.value
 
-score = TotalScore()
+    def add(self, points):
+        self.value += points
 
-# Drawing everything on screen
+score = Score()
+
+# Draw everything
 def draw(canvas):
-    # Draw background
+    # Background
     if background.get_width() > 0:
         canvas.draw_image(
             background,
@@ -42,38 +43,40 @@ def draw(canvas):
             (WIDTH, HEIGHT)
         )
 
-    # Draw game over text
+    # Game Over title
     title = "GAME OVER"
     title_size = 40
-    title_w = frame.get_canvas_textwidth(title, title_size, "monospace")
-    canvas.draw_text(title, ((WIDTH - title_w) // 2, 80), title_size, "White", "monospace")
+    title_width = frame.get_canvas_textwidth(title, title_size, "monospace")
+    canvas.draw_text(title, ((WIDTH - title_width) // 2, 80), title_size, "White", "monospace")
 
-    # Draw score
-    score_text = "Score: " + str(score.get())
+    # Score
+    score_label = "Score: " + str(score.get())
     score_size = 24
-    score_w = frame.get_canvas_textwidth(score_text, score_size, "monospace")
-    canvas.draw_text(score_text, ((WIDTH - score_w) // 2, 150), score_size, "White", "monospace")
+    score_width = frame.get_canvas_textwidth(score_label, score_size, "monospace")
+    canvas.draw_text(score_label, ((WIDTH - score_width) // 2, 150), score_size, "White", "monospace")
 
-    # Draw button
+    # Button
     canvas.draw_polygon(
-        [(button_x, button_y), (button_x + button_w, button_y), 
-         (button_x + button_w, button_y + button_h), (button_x, button_y + button_h)],
+        [(btn_x, btn_y),
+         (btn_x + btn_width, btn_y),
+         (btn_x + btn_width, btn_y + btn_height),
+         (btn_x, btn_y + btn_height)],
         2, "White", "Gray"
     )
 
-    label_size = 20
-    label_w = frame.get_canvas_textwidth(button_label, label_size, "monospace")
-    canvas.draw_text(button_label, ((button_x + (button_w - label_w) / 2), button_y + 28), label_size, "White", "monospace")
+    text_size = 20
+    text_width = frame.get_canvas_textwidth(btn_text, text_size, "monospace")
+    canvas.draw_text(btn_text, ((btn_x + (btn_width - text_width) // 2), btn_y + 28), text_size, "White", "monospace")
 
-# Handle button clicks
+# Handle mouse click
 def click(pos):
     x, y = pos
-    if btn_x <= x <= button_x + button_w and button_y <= y <= button_y + button_h:
+    if btn_x <= x <= btn_x + btn_width and btn_y <= y <= btn_y + btn_height:
         print("Play Again clicked")
         score.reset()
-        # Restart logic goes here if needed
+        # You can add logic to go back to start screen here
 
-# Set up frame
+# Create the window
 frame = simplegui.create_frame("Game Over", WIDTH, HEIGHT)
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(click)
