@@ -67,7 +67,7 @@ def draw(canvas):
 def click(pos):
     """Handles button clicks."""
     x, y = pos
-    if btn_x <= x <= btn_x + btn_width and btn_y <= y <= btn_y + btn_height:
+    if button_x <= x <= button_x + button_width and button_y <= y <= button_y + button_height:
         start_game()
 
 def start_game():
