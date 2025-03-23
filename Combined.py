@@ -185,6 +185,12 @@ class Enemy(Spaceship):
             bullet.update(4)
             if bullet.pos[1] > canvasHeight:
                 self.removeBullet(bullet)
+                
+    def getWidth(self):
+        return self.enemyWidthHeightDest[0]
+    
+    def getHeight(self):
+        return self.enemyWidthHeightDest[1]
           
         
 class Keyboard:
@@ -278,7 +284,7 @@ class Interaction:
             self.space_down = False
         self.bullet_timer += 1
 
-
+'''
 player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
                -math.pi/2, canvasWidth, canvasHeight)
 kbd = Keyboard()
@@ -293,24 +299,98 @@ enemy = Enemy(
     canvasWidth,
     canvasHeight,
     1
-) 
-def checkShipCollision(bulletPos, ship):
+)
+'''
+
+class Game:
+    def __init__(self, canvasWidth, canvasHeight):
+        self.player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
+                      -math.pi/2, canvasWidth, canvasHeight)
+        self.keyboard = Keyboard()
+        self.inter = Interaction(self.player, self.keyboard)
+        self.enemies = []
+        self.stage = 1
+        self.canvasWidth = canvasWidth
+        self.canvasHeight = canvasHeight
+        self.frame = simplegui.create_frame('Player', canvasWidth, canvasHeight)
+        self.frame.set_draw_handler(self.draw_handler)
+        self.frame.set_keydown_handler(self.keyboard.keyDown)
+        self.frame.set_keyup_handler(self.keyboard.keyUp)
+        self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
+        
+        
+    def runGame(self):
+        if self.stage == 1:
+            self.trioFormation((80, 80))
+            self.trioFormation((350, 80))
+            self.trioFormation((620, 80))
+            self.frame.start()
+            
+    def loadEnemy(self, startPos, url, rotation, health):
+        enemy = Enemy(startPos, url, rotation, self.canvasWidth, self.canvasHeight, health)
+        self.enemies.append(enemy)
+        
+    def trioFormation(self, pos):
+        leftEnemy = self.loadEnemy(pos, "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                             math.pi/2, 1)
+        enemy = self.enemies[len(self.enemies) - 1]
+        width, height = enemy.getWidth(), enemy.getHeight()
+        middleEnemy = self.loadEnemy((pos[0] + width, pos[1] + height),
+                               "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                               math.pi/2, 1)
+        rightEnemy = self.loadEnemy((pos[0] + 2*width, pos[1]),
+                              "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                              math.pi/2, 1)
+        
+    def draw_handler(self, canvas):
+        canvas.draw_image(self.background, (self.background.get_width()/2, self.background.get_height()/2),
+                     (self.background.get_width(), self.background.get_height()),
+                     (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
+        
+        self.inter.update(canvas)
+        
+        if self.player.alive:
+            self.player.draw(canvas)
+            self.player.update()
+        
+        for enemy in self.enemies:
+            if enemy.alive:
+                enemy.draw(canvas)
+                enemy.update()
+            
+        for bullet in self.player.shots:
+            for enemy in self.enemies:
+                if self.checkShipCollision(bullet.pos, enemy):
+                    enemy.health -= 1
+                    if enemy.health == 0:
+                        enemy.alive = False
+                    self.player.removeBullet(bullet)
+        
+        for enemy in self.enemies:
+            for bullet in enemy.enemyBullets:
+                if self.checkShipCollision(bullet.pos, self.player):
+                    self.player.health -= 1
+                    if self.player.health == 0:
+                        self.player.alive = False
+                    enemy.removeBullet(bullet)
+   
+    def checkShipCollision(self, bulletPos, ship):
         if ship.alive == False:
             return False
-        
+            
         shipWidth, shipHeight = ship.widthHeightDest
         shipLeft = ship.pos.x - shipWidth/2
         shipRight = ship.pos.x + shipWidth/2
         shipFront = ship.pos.y + shipHeight/2
         shipBack = ship.pos.y - shipHeight/2
-        
+            
         bulletX, bulletY = bulletPos
-        
-        if (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront):
-            return True
-        else:
-            return False
-    
+            
+        return (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront)
+
+game = Game(canvasWidth, canvasHeight)
+game.runGame()
+'''
 def draw_handler(canvas):
     canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
                      (background.get_width(), background.get_height()),
@@ -347,3 +427,4 @@ frame.set_draw_handler(draw_handler)
 frame.set_keydown_handler(kbd.keyDown)
 frame.set_keyup_handler(kbd.keyUp)
 frame.start()
+'''
