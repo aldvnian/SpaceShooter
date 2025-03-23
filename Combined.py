@@ -306,7 +306,10 @@ def checkShipCollision(bulletPos, ship):
         
         bulletX, bulletY = bulletPos
         
-        return (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront)
+        if (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront):
+            return True
+        else:
+            return False
     
 def draw_handler(canvas):
     canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
