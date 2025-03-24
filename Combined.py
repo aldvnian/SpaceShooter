@@ -1,4 +1,4 @@
-import simplegui, math
+import simplegui, math, random
 from user304_rsf8mD0BOQ_1 import Vector
 
 canvasWidth = 800
@@ -153,9 +153,6 @@ class Enemy(Spaceship):
         self.enemyWidthHeightDest = (65, 65)
         self.current_rotation = math.pi/2
         self.enemyBullets = []
-        self.shotsDelay = 1000
-        self.timer = simplegui.create_timer(self.shotsDelay, self.loadBullet)
-        self.timer.start()
         self.alive = True
         self.health = health
                
@@ -163,8 +160,10 @@ class Enemy(Spaceship):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
+        '''
         for bullet in self.enemyBullets:
             bullet.draw(canvas)
+        '''
 
         
     def loadBullet(self):
@@ -181,7 +180,7 @@ class Enemy(Spaceship):
     
     def update(self):
         super().update()
-        for bullet in self.enemyBullets[:]:
+        for bullet in self.enemyBullets:
             bullet.update(4)
             if bullet.pos[1] > canvasHeight:
                 self.removeBullet(bullet)
@@ -317,14 +316,21 @@ class Game:
         self.frame.set_keydown_handler(self.keyboard.keyDown)
         self.frame.set_keyup_handler(self.keyboard.keyUp)
         self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
+        self.clock = 1
         
         
     def runGame(self):
         if self.stage == 1:
-            self.trioFormation((80, 80))
-            self.trioFormation((350, 80))
-            self.trioFormation((620, 80))
+            self.trioFormation((80, -100))
+            self.trioFormation((350, -100))
+            self.trioFormation((620, -100))
             self.frame.start()
+            
+    def enemyShoot(self):
+        enemy = random.choice(self.enemies)
+        while enemy.alive != True:
+            enemy = random.choice(self.enemies)
+        enemy.loadBullet()
             
     def loadEnemy(self, startPos, url, rotation, health):
         enemy = Enemy(startPos, url, rotation, self.canvasWidth, self.canvasHeight, health)
@@ -343,9 +349,17 @@ class Game:
                               math.pi/2, 1)
         
     def draw_handler(self, canvas):
+        enemiesAlive = True
         canvas.draw_image(self.background, (self.background.get_width()/2, self.background.get_height()/2),
                      (self.background.get_width(), self.background.get_height()),
                      (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
+        
+        if len(self.enemies) == 0:
+            enemiesAlive = False
+        
+        if not enemiesAlive:
+            self.stage += 1
+            self.runGame()
         
         self.inter.update(canvas)
         
@@ -354,27 +368,53 @@ class Game:
             self.player.update()
         
         for enemy in self.enemies:
-            if enemy.alive:
-                enemy.draw(canvas)
-                enemy.update()
+            enemy.draw(canvas)
+            enemy.update()
+            for bullet in enemy.enemyBullets:
+                bullet.draw(canvas)
             
         for bullet in self.player.shots:
             for enemy in self.enemies:
-                if self.checkShipCollision(bullet.pos, enemy):
+                if self.checkBulletCollision(bullet.pos, enemy):
                     enemy.health -= 1
                     if enemy.health == 0:
                         enemy.alive = False
                     self.player.removeBullet(bullet)
-        
+                    
+        for enemy in self.enemies:
+            if enemy.alive == False:
+                if enemy.pos.get_p()[1] < self.canvasHeight + enemy.enemyWidthHeightDest[1]:
+                    enemy.current_rotation += 0.2
+                    enemy.vel = Vector(0, 2)
+                    if self.checkShipCollision(self.player, enemy):
+                        self.enemies.remove(enemy)
+                        self.player.health -= 1
+                else:
+                    self.enemies.remove(enemy)
+                    
+                    
         for enemy in self.enemies:
             for bullet in enemy.enemyBullets:
-                if self.checkShipCollision(bullet.pos, self.player):
+                if self.checkBulletCollision(bullet.pos, self.player):
                     self.player.health -= 1
-                    if self.player.health == 0:
-                        self.player.alive = False
                     enemy.removeBullet(bullet)
+                    
+        if self.player.health == 0:
+            self.player.alive = False
+                    
+        if self.stage == 1:
+            temp = self.enemies[0]
+            if temp.pos.get_p()[1] < 80:
+                for enemy in self.enemies:
+                    enemy.pos.y += 1
+            else:
+                self.clock += 1
+                
+        if self.clock % 180 == 0:
+            self.clock = 0
+            self.enemyShoot()
    
-    def checkShipCollision(self, bulletPos, ship):
+    def checkBulletCollision(self, bulletPos, ship):
         if ship.alive == False:
             return False
             
@@ -387,44 +427,28 @@ class Game:
         bulletX, bulletY = bulletPos
             
         return (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront)
+    
+    def checkShipCollision(self, ship1, ship2):
+        if ship1.alive == False and ship2.alive == False:
+            return False
+        
+        firstWidth, firstHeight = ship1.widthHeightDest
+        firstLeft = ship1.pos.x - firstWidth/2
+        firstRight = ship1.pos.x + firstWidth/2
+        firstFront = ship1.pos.y + firstHeight/2
+        firstBack = ship1.pos.y - firstHeight/2
+        
+        secondWidth, secondHeight = ship2.widthHeightDest
+        secondLeft = ship2.pos.x - secondWidth/2
+        secondRight = ship2.pos.x + secondWidth/2
+        secondFront = ship2.pos.y + secondHeight/2
+        secondBack = ship2.pos.y - secondHeight/2
+        
+        return (
+        firstLeft <= secondRight and firstRight >= secondLeft and
+        firstBack <= secondFront and firstFront >= secondBack
+        )
+        
 
 game = Game(canvasWidth, canvasHeight)
 game.runGame()
-'''
-def draw_handler(canvas):
-    canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
-                     (background.get_width(), background.get_height()),
-                     (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
-   
-    inter.update(canvas)
-    
-    if enemy.alive:
-        enemy.update()
-        enemy.draw(canvas)
-        
-    for bullet in player.shots:
-        if checkShipCollision(bullet.pos, enemy):
-            enemy.health -= 1
-            if enemy.health == 0:
-                enemy.alive = False
-            player.removeBullet(bullet)
-            
-    if player.alive:
-        player.draw(canvas)
-        player.update()
-        
-    for bullet in enemy.enemyBullets:
-        if checkShipCollision(bullet.pos, player):
-            player.health -= 1
-            if player.health == 0:
-                player.alive = False
-            enemy.removeBullet(bullet)
-
-        
-frame = simplegui.create_frame('Player', canvasWidth, canvasHeight)
-frame.set_canvas_background('black')
-frame.set_draw_handler(draw_handler)
-frame.set_keydown_handler(kbd.keyDown)
-frame.set_keyup_handler(kbd.keyUp)
-frame.start()
-'''
