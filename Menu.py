@@ -1,81 +1,67 @@
 import simplegui
 
-# Canvas size
-width, height = 400, 300
+class Menu:
+    def __init__(self):
+        self.canvas_width = 400
+        self.canvas_height = 300
+        self.background = simplegui.load_image("https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg")
+        self.title = "Space Raider"
+        self.title_size = 36
+        self.title_font = "monospace"
+        self.instructions_title = "Instructions"
+        self.instructions_size = 24
+        self.instructions = [
+            "- Use arrow keys to move and spacebar to shoot.", 
+            "- Move up and down to avoid obstacles.", 
+            "- Shoot aliens, avoid projectiles, and survive!"
+        ]
+        self.start_width = 100
+        self.start_height = 40
+        self.start_x = self.canvas_width/2
+        self.start_y = self.canvas_height - 150
+        self.start_text = "Start"
+        self.frame = simplegui.create_frame("Space Raider Game", width, height)
+        self.frame.set_draw_handler(draw)
+        self.frame.set_mouseclick_handler(click)
+        self.frame.start()
 
-# Load background image
-background_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
-background = simplegui.load_image(background_url)
+    def draw(canvas):
+        if background.get_width() > 0:
+            canvas.draw_image(
+                background, 
+                (background.get_width()/2, background.get_height()/2), 
+                (background.get_width(), background.get_height()), 
+                (width/2, height/2), 
+                (width, height)
+            )
+        
+        title_width = frame.get_canvas_textwidth(title, title_size, title_font)
+        canvas.draw_text(title, [self.canvas_width/2, 40], self.title_size, "White", self.title_font)
 
-# Title settings
-title = "Space Raider"
-title_size = 36
-title_font = "monospace"
-
-# Instructions
-instructions_title = "Instructions"
-instructions_size = 24
-instructions = [
-    "- Use arrow keys to move and spacebar to shoot.", 
-    "- Move up and down to avoid obstacles.", 
-    "- Shoot aliens, avoid projectiles, and survive!"
-]
-
-# Start button settings
-button_width, button_height = 100, 40
-button_x = (width - button_width) // 2
-button_y = 240
-button_text = "Start"
-
-def draw(canvas):
-    """Draws everything on the screen."""
-    if background.get_width() > 0 and background.get_height() > 0:
-        canvas.draw_image(
-            background, 
-            (background.get_width() / 2, background.get_height() / 2), 
-            (background.get_width(), background.get_height()), 
-            (width / 2, height / 2), 
-            (width, height)
+        heading_width = frame.get_canvas_textwidth(self.instructions_title, self.instructions_size, "serif")
+        canvas.draw_text(self.instructions_title, [self.canvas_width/2, 90], self.instructions_size, "White", "serif")
+    
+        y_value = 120
+        for line in self.instructions:
+            text_width = frame.get_canvas_textwidth(line, 18, "serif")
+            canvas.draw_text(line, [self.canvas_width/2, y_value], 18, "White", "serif")
+            y_value += 25  
+    
+        canvas.draw_polygon(
+            [(self.start_x, self.start_y), (self.start_x + self.start_width, self.start_y), 
+             (self.start_x + self.start_width, self.start_y + self.start_height), (self.start_x, self.start_y + self.start_height)], 
+            2, "White", "Gray"
         )
     
-    # Draw title
-    title_width = frame.get_canvas_textwidth(title, title_size, title_font)
-    canvas.draw_text(title, [(width - title_width) // 2, 40], title_size, "White", title_font)
+        text_width = frame.get_canvas_textwidth(self.start_text, 20, title_font)
+        text_pos = [(self.start_x + (self.start_width - text_width) / 2), self.start_y + 28]
+        canvas.draw_text(self.start_text, text_pos, 20, "White", self.title_font)
 
-    # Draw instructions title
-    heading_width = frame.get_canvas_textwidth(instructions_title, instructions_size, "serif")
-    canvas.draw_text(instructions_title, [(width - heading_width) // 2, 90], instructions_size, "White", "serif")
-
-    # Draw instructions
-    y_offset = 120
-    for line in instructions:
-        text_width = frame.get_canvas_textwidth(line, 18, "serif")
-        canvas.draw_text(line, [(width - text_width) // 2, y_offset], 18, "White", "serif")
-        y_offset += 25  
-
-    # Draw start button
-    canvas.draw_polygon(
-        [(button_x, button_y), (button_x + button_width, button_y), 
-         (button_x + button_width, button_y + button_height), (button_x, button_y + button_height)], 
-        2, "White", "Gray"
-    )
-
-    # Draw button text
-    text_width = frame.get_canvas_textwidth(button_text, 20, title_font)
-    canvas.draw_text(button_text, [(button_x + (button_width - text_width) / 2), button_y + 28], 20, "White", title_font)
-
-def click(pos):
-    """Handles button clicks."""
-    x, y = pos
-    if button_x <= x <= button_x + button_width and button_y <= y <= button_y + button_height:
-        start_game()
-
-def start_game():
-    """Placeholder for starting the game."""
-    print("Game started!")
-
-# Create frame
-frame = simplegui.create_frame("Space Raider Game", width, height)
-frame.set_draw_handler(draw)
-frame.set_mouseclick_handler(click)
-frame.start()
+    def click(pos):
+        x, y = pos
+        if self.start_x <= x <= self.start_x + self.start_width:
+            if self.start_y <= y <= self.start_y + self.start_height:
+                self.start_game()
+    
+    def start_game():
+        print("Game started!")
