@@ -1,8 +1,5 @@
-import simplegui, math
+import simplegui, math, random
 from user304_rsf8mD0BOQ_1 import Vector
-
-canvasWidth = 800
-canvasHeight = 600
 
 class Spritesheet:
     def __init__(self, url, rows, columns, center_dest, size_drawn, rotation, num_frames):
@@ -54,6 +51,8 @@ class Spaceship():
         self.widthHeightDest = (90, 90)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.currentRotation = startingRotation
+        self.canvasWidth = canvasWidth
+        self.canvasHeight = canvasHeight
 
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
@@ -122,7 +121,8 @@ class Player(Spaceship):
                                     -math.pi/2))
     
     def removeBullet(self, bullet):
-        self.shots.remove(bullet)
+        if bullet in self.shots:
+            self.shots.remove(bullet)
         
     def inBorder(self):
         if self.pos.x > self.borderRight:
@@ -148,31 +148,24 @@ class Player(Spaceship):
 
         
 class Enemy(Spaceship):
-    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health):
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest, shoots):
         super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
-        self.enemyWidthHeightDest = (65, 65)
+        self.enemyWidthHeightDest = widthHeightDest
         self.current_rotation = math.pi/2
         self.enemyBullets = []
-        self.shotsDelay = 1000
-        self.timer = simplegui.create_timer(self.shotsDelay, self.loadBullet)
-        self.timer.start()
         self.alive = True
         self.health = health
+        self.shield = True
+        self.shoots = shoots
                
     def draw(self, canvas):
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
-        canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
-        for bullet in self.enemyBullets:
-            bullet.draw(canvas)
-
+        if self.shipImage.get_width() > 0:
+            canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
         
-    def loadBullet(self):
-        newEnemyBullet = Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot1/shot1_exp1.png",
-                                    (self.pos.x, self.pos.y + 50),
-                                    (30, 30),
-                                    -math.pi/2
-        )
+    def loadBullet(self, url, size):
+        newEnemyBullet = Bullet(url, (self.pos.x, self.pos.y + 50), size, -math.pi/2)
         self.enemyBullets.append(newEnemyBullet)
         
     def removeBullet(self, bullet):
@@ -181,10 +174,16 @@ class Enemy(Spaceship):
     
     def update(self):
         super().update()
-        for bullet in self.enemyBullets[:]:
+        for bullet in self.enemyBullets:
             bullet.update(4)
-            if bullet.pos[1] > canvasHeight:
+            if bullet.pos[1] > self.canvasHeight:
                 self.removeBullet(bullet)
+                
+    def getWidth(self):
+        return self.enemyWidthHeightDest[0]
+    
+    def getHeight(self):
+        return self.enemyWidthHeightDest[1]
           
         
 class Keyboard:
@@ -278,72 +277,304 @@ class Interaction:
             self.space_down = False
         self.bullet_timer += 1
 
-
-player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
-               -math.pi/2, canvasWidth, canvasHeight)
-kbd = Keyboard()
-inter = Interaction(player, kbd)
-background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
-
-
-enemy = Enemy(
-    (canvasWidth/2, canvasHeight - 550),  
-    "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
-    math.pi/2,
-    canvasWidth,
-    canvasHeight,
-    1
-) 
-def checkShipCollision(bulletPos, ship):
+class Game:
+    def __init__(self):
+        self.canvasWidth = 800
+        self.canvasHeight = 650
+        self.player = Player("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts%26Spriter_Animation/Ship6/Ship6.png",
+                      -math.pi/2, self.canvasWidth, self.canvasHeight)
+        self.keyboard = Keyboard()
+        self.inter = Interaction(self.player, self.keyboard)
+        self.enemies = []
+        self.stage = 1
+        self.frame = simplegui.create_frame('Player', self.canvasWidth, self.canvasHeight)
+        self.frame.set_draw_handler(self.draw_handler)
+        self.frame.set_keydown_handler(self.keyboard.keyDown)
+        self.frame.set_keyup_handler(self.keyboard.keyUp)
+        self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
+        self.clock = 1
+        self.first = 1
+        self.second = -1
+        
+        
+    def runGame(self):
+        if self.stage == 1:
+            self.trioFormation((80, -100))
+            self.trioFormation((350, -100))
+            self.trioFormation((620, -100))
+            self.frame.start()
+        if self.stage == 2:
+            self.loadEnemy((80, -260), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((160, -160), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((240, -240), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((320, -140), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((480, -140), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((560, -240), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((640, -160), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+            self.loadEnemy((720, -260), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                          math.pi/2, 1, (65, 65), True)
+        if self.stage == 3:
+            self.loadEnemy((20, -80), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                          math.pi/2, 3, (100, 100), True)
+            self.loadEnemy((self.canvasWidth - 20, -200), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                          math.pi/2, 3, (100, 100), True)
+        if self.stage == 4:
+            self.Vshape((self.canvasWidth/2, -50))
+        if self.stage == 5:
+            self.loadEnemy((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
+                          math.pi/2, 10, (150, 150), True)
+            
+    def enemyShoot(self, url):
+        allShootersDead = True
+        for enemy in self.enemies:
+            if enemy.alive == True and enemy.shoots == True:
+                allShootersDead = False
+                
+        if not allShootersDead:
+            enemy = random.choice(self.enemies)
+            while enemy.alive != True or enemy.shoots == False:
+                enemy = random.choice(self.enemies)
+            if self.stage <= 2:
+                enemy.loadBullet(url, (30, 30))
+            elif self.stage == 3 or self.stage == 4:
+                enemy.loadBullet(url, (80, 80))
+            
+    def loadEnemy(self, startPos, url, rotation, health, widthHeightDest, shoots):
+        enemy = Enemy(startPos, url, rotation, self.canvasWidth, self.canvasHeight, health, widthHeightDest, shoots)
+        self.enemies.append(enemy)
+        
+    def trioFormation(self, pos):
+        leftEnemy = self.loadEnemy(pos, "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                             math.pi/2, 1, (65, 65), True)
+        enemy = self.enemies[len(self.enemies) - 1]
+        width, height = enemy.getWidth(), enemy.getHeight()
+        middleEnemy = self.loadEnemy((pos[0] + width, pos[1] + height),
+                               "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                               math.pi/2, 1, (65, 65), True)
+        rightEnemy = self.loadEnemy((pos[0] + 2*width, pos[1]),
+                              "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship1/Ship1.png",
+                              math.pi/2, 1, (65, 65), True)
+        
+    def Vshape(self, pos):
+        main = self.loadEnemy(pos, "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        enemy = self.enemies[len(self.enemies) - 1]
+        width, height = enemy.getWidth() - 20, enemy.getHeight() - 20
+        mid = self.loadEnemy((pos[0], pos[1] - height), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid1 = self.loadEnemy((pos[0] - width, pos[1] - height*2), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid2 = self.loadEnemy((pos[0] + width, pos[1] - height*2), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid3 = self.loadEnemy((pos[0], pos[1] - height*2), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid4 = self.loadEnemy((pos[0] - width*2, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid5 = self.loadEnemy((pos[0] - width, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid6 = self.loadEnemy((pos[0] + width*2, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid7 = self.loadEnemy((pos[0], pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid8 = self.loadEnemy((pos[0] + width*3, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        mid9 = self.loadEnemy((pos[0] + width, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), False)
+        sub1 = self.loadEnemy((pos[0] - width, pos[1] - height), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        sub2 = self.loadEnemy((pos[0] + width, pos[1] - height), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        sub3 = self.loadEnemy((pos[0] - width*2, pos[1] - height*2), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        sub4 = self.loadEnemy((pos[0] + width*2, pos[1] - height*2), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        sub5 = self.loadEnemy((pos[0] - width*3, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        sub6 = self.loadEnemy((pos[0] + width*3, pos[1] - height*3), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship3/Ship3.png",
+                              math.pi/2, 3, (100, 100), True)
+        self.frame.start()
+        
+    def draw_handler(self, canvas):
+        canvas.draw_image(self.background, (self.background.get_width()/2, self.background.get_height()/2),
+                     (self.background.get_width(), self.background.get_height()),
+                     (self.canvasWidth/2, self.canvasHeight/2), (self.canvasWidth, self.canvasHeight))
+        self.inter.update(canvas)
+        enemiesAlive = True
+        if self.player.alive:
+            self.player.draw(canvas)
+            self.player.update()
+            
+        for enemy in self.enemies:
+            enemy.draw(canvas)
+            enemy.update()
+            for bullet in enemy.enemyBullets:
+                bullet.draw(canvas)
+            if enemy.alive == False:
+                if enemy.pos.get_p()[1] < self.canvasHeight + enemy.enemyWidthHeightDest[1]:
+                    enemy.current_rotation += 0.2
+                    if self.stage == 1:
+                        enemy.vel = Vector(0, 2)
+                    else:
+                        enemy.vel = Vector(0, 4)
+                    if self.checkShipCollision(self.player, enemy):
+                        self.enemies.remove(enemy)
+                        self.player.health -= 1
+                else:
+                    self.enemies.remove(enemy)
+            
+        for playerBullet in self.player.shots:
+            for enemy in self.enemies:
+                if self.checkBulletCollision(playerBullet.pos, enemy):
+                    if not enemy.shield:
+                        enemy.health -= 1
+                    if enemy.health == 0:
+                        enemy.alive = False
+                    self.player.removeBullet(playerBullet)
+                    
+        for enemy in self.enemies:
+            for enemyBullet in enemy.enemyBullets:
+                if self.checkBulletCollision(enemyBullet.pos, self.player):
+                    self.player.health -= 1
+                    enemy.removeBullet(enemyBullet)
+                    
+        if self.clock >= 140:
+            self.clock = 0
+            if self.stage <= 2:
+                self.enemyShoot("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot1/shot1_exp1.png")
+            elif self.stage == 3 or self.stage == 4:
+                self.enemyShoot("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot4/shot4_5.png")
+        
+        if self.player.health == 0:
+            self.player.alive = False
+            
+        if len(self.enemies) == 0:
+            enemiesAlive = False
+        
+        if not enemiesAlive:
+            self.stage += 1
+            self.runGame()
+                    
+        if self.stage == 1:
+            temp = self.enemies[0]
+            if temp.pos.get_p()[1] < 80:
+                for enemy in self.enemies:
+                    enemy.pos.y += 1
+            else:
+                self.clock += 1
+                for enemy in self.enemies:
+                    enemy.shield = False
+        elif self.stage == 2:
+            lowest = 1000
+            for enemy in self.enemies:
+                enemyY = enemy.pos.get_p()[1]
+                if enemyY < lowest:
+                    lowest = enemyY
+                    
+            adder = 40 - lowest
+            for enemy in self.enemies:
+                if adder > 0:
+                    enemy.pos.y += 1
+            if adder == 0:
+                self.clock += 2
+                for enemy in self.enemies:
+                    enemy.shield = False
+        elif self.stage == 3:
+            lowest = 1000
+            for enemy in self.enemies:
+                if enemy.pos.get_p()[1] < lowest:
+                    lowest = enemy.pos.get_p()[1]
+            if lowest - 80 < 0:
+                first = self.enemies[0]
+                second = self.enemies[1]
+                first.pos.y += 1
+                second.pos.y += 1
+                lowest += 1
+            else:
+                self.clock += 1.5
+                for enemy in self.enemies:
+                    enemy.shield = False
+                if len(self.enemies) == 2:
+                    firstRight = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
+                    firstLeft = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
+                    secondRight = self.enemies[1].pos.get_p()[0] + self.enemies[1].enemyWidthHeightDest[0]/2
+                    secondLeft = self.enemies[1].pos.get_p()[0] - self.enemies[1].enemyWidthHeightDest[0]/2
+                    if firstRight >= self.canvasWidth:
+                        self.first = -1
+                    if firstLeft <= 0:
+                        self.first = 1
+                    if secondRight >= self.canvasWidth:
+                        self.second = -1
+                    if secondLeft <= 0:
+                        self.second = 1
+                    self.enemies[0].pos.x += self.first
+                    self.enemies[1].pos.x += self.second
+                else:
+                    firstRight = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
+                    firstLeft = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
+                    if firstRight >= self.canvasWidth:
+                        self.first = -1
+                    if firstLeft <= 0:
+                        self.first = 1
+                    self.enemies[0].pos.x += self.first
+        elif self.stage == 4:
+            lowest = 1000
+            for enemy in self.enemies:
+                enemyY = enemy.pos.get_p()[1]
+                if enemyY < lowest:
+                    lowest = enemyY
+            if lowest < 50:
+                for enemy in self.enemies:
+                    enemy.pos.y += 1
+            else:
+                self.clock += 1.5
+                for enemy in self.enemies:
+                    enemy.shield = False
+        elif self.stage == 5:
+            if self.enemies[0].pos.get_p()[1] < 100:
+                self.enemies[0].pos.y += 1
+   
+    def checkBulletCollision(self, bulletPos, ship):
         if ship.alive == False:
             return False
-        
+            
         shipWidth, shipHeight = ship.widthHeightDest
         shipLeft = ship.pos.x - shipWidth/2
         shipRight = ship.pos.x + shipWidth/2
         shipFront = ship.pos.y + shipHeight/2
         shipBack = ship.pos.y - shipHeight/2
-        
-        bulletX, bulletY = bulletPos
-        
-        if (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront):
-            return True
-        else:
-            return False
-    
-def draw_handler(canvas):
-    canvas.draw_image(background, (background.get_width()/2, background.get_height()/2),
-                     (background.get_width(), background.get_height()),
-                     (canvasWidth/2, canvasHeight/2), (canvasWidth, canvasHeight))
-   
-    inter.update(canvas)
-    
-    if enemy.alive:
-        enemy.update()
-        enemy.draw(canvas)
-        
-    for bullet in player.shots:
-        if checkShipCollision(bullet.pos, enemy):
-            enemy.health -= 1
-            if enemy.health == 0:
-                enemy.alive = False
-            player.removeBullet(bullet)
             
-    if player.alive:
-        player.draw(canvas)
-        player.update()
+        bulletX, bulletY = bulletPos
+            
+        return (shipLeft <= bulletX <= shipRight and shipBack <= bulletY <= shipFront)
+    
+    def checkShipCollision(self, ship1, ship2):
+        if ship1.alive == False and ship2.alive == False:
+            return False
         
-    for bullet in enemy.enemyBullets:
-        if checkShipCollision(bullet.pos, player):
-            player.health -= 1
-            if player.health == 0:
-                player.alive = False
-            enemy.removeBullet(bullet)
+        firstWidth, firstHeight = ship1.widthHeightDest
+        firstLeft = ship1.pos.x - firstWidth/2
+        firstRight = ship1.pos.x + firstWidth/2
+        firstFront = ship1.pos.y + firstHeight/2
+        firstBack = ship1.pos.y - firstHeight/2
+        
+        secondWidth, secondHeight = ship2.widthHeightDest
+        secondLeft = ship2.pos.x - secondWidth/2
+        secondRight = ship2.pos.x + secondWidth/2
+        secondFront = ship2.pos.y + secondHeight/2
+        secondBack = ship2.pos.y - secondHeight/2
+        
+        return (
+        firstLeft <= secondRight and firstRight >= secondLeft and
+        firstBack <= secondFront and firstFront >= secondBack
+        )
+        
 
-        
-frame = simplegui.create_frame('Player', canvasWidth, canvasHeight)
-frame.set_canvas_background('black')
-frame.set_draw_handler(draw_handler)
-frame.set_keydown_handler(kbd.keyDown)
-frame.set_keyup_handler(kbd.keyUp)
-frame.start()
+game = Game()
+game.runGame()
