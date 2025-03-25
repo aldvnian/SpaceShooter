@@ -3,7 +3,7 @@ import simplegui
 WIDTH, HEIGHT = 500, 400
 
 
-class StoryScreen:
+class Story:
     
 
     def __init__(self):
@@ -86,5 +86,5 @@ class StoryScreen:
 
 
 # Create and start the story screen
-story = StoryScreen()
-story.frame.start()
+StoryScreen = Story()
+StoryScreen.frame.start()
