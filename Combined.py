@@ -295,6 +295,7 @@ class Game:
         self.clock = 1
         self.first = 1
         self.second = -1
+        self.score = 0
         
         
     def runGame(self):
