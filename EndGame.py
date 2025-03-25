@@ -15,29 +15,14 @@ button_x = (WIDTH - button_width) // 2
 button_y = 210
 button_text = "Play Again"
 
-# Score tracker
-class Score:
-    def __init__(self):
-        self.value = 0
-
-    def reset(self):
-        self.value = 0
-
-    def get(self):
-        return self.value
-
-    def add(self, points):
-        self.value += points
-
-score = Score()
-
 # Draw everything
 class Endgame:
-    def __init_(self):
+    def __init_(self, score):
         self.frame = simplegui.create_frame("Game Over", WIDTH, HEIGHT)
         self.frame.set_draw_handler(self.draw)
         self.frame.set_mouseclick_handler(self.click)
         self.frame.start()
+        self.score
         
     def draw(canvas):
         # Background
@@ -57,7 +42,7 @@ class Endgame:
         canvas.draw_text(title, ((WIDTH - title_width) // 2, 80), title_size, "White", "monospace")
     
         # Score
-        score_label = "Score: " + str(score.get())
+        score_label = "Score: " + str(self.score)
         score_size = 24
         score_width = frame.get_canvas_textwidth(score_label, score_size, "monospace")
         canvas.draw_text(score_label, ((WIDTH - score_width) // 2, 150), score_size, "White", "monospace")
