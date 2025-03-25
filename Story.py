@@ -17,7 +17,7 @@ class Story:
 
         self.story_text = [
             "In the year 4035...",
-            "The Aliens has invaded our universe",
+            "The Aliens have invaded our universe",
             "The Galatic Defense Federation is falling",
             "You are humanity's last flame of hope",
             "Pilot your trusty spaceship and save humanity from the aliens",
