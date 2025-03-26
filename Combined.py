@@ -112,10 +112,10 @@ class Player(Spaceship):
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
         self.shot_animation = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
                                2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
-        self.borderRight = canvasWidth - self.widthHeightDest[0]/2
-        self.borderLeft = self.widthHeightDest[0]/2
+        self.borderRight = canvasWidth - self.widthHeightDest[0]/2 - 15
+        self.borderLeft = self.widthHeightDest[0]/2 + 50
         self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
-        self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
+        self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 15
         self.shoot = False
         self.shots = []
         self.alive = True
@@ -574,9 +574,9 @@ class Game:
                     firstRight = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
                     firstLeft = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
                     if firstRight >= self.canvasWidth:
-                        self.first = -1
+                        self.first = -2
                     if firstLeft <= 0:
-                        self.first = 1
+                        self.first = 2
                     self.enemies[0].pos.x += self.first
         elif self.stage == 4:
             self.first = 3
@@ -607,6 +607,7 @@ class Game:
                     self.first = 4
                 self.enemies[0].pos.x += self.first
         elif self.stage == 6:
+            self.score += 900
             endgame = Endgame(self.score, self.frame, "You Win")
                   
    
