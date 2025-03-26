@@ -331,7 +331,7 @@ class Game:
             self.Vshape((self.canvasWidth/2, -50))
         if self.stage == 5:
             self.loadEnemy((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
-                          math.pi/2, 10, (150, 150), True, -120)
+                          math.pi/2, 20, (150, 150), True, -120)
             self.frame.set_draw_handler(self.draw_handler)
             self.frame.set_keydown_handler(self.keyboard.keyDown)
             self.frame.set_keyup_handler(self.keyboard.keyUp)
