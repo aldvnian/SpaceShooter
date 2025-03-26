@@ -72,12 +72,9 @@ class Story:
        
         x, y = pos
         if self.button_x <= x <= self.button_x + self.button_width and self.button_y <= y <= self.button_y + self.button_height:
-            self.start_game()
-
-    def start_game(self):
-        print("")
-        
-        
+            self.frame.stop()
+            menu = Menu()
+            #this connects it to menu in trial
 
 
 
