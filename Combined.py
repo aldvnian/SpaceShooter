@@ -288,7 +288,7 @@ class Game:
         self.keyboard = Keyboard()
         self.inter = Interaction(self.player, self.keyboard)
         self.enemies = []
-        self.stage = 5
+        self.stage = 1
         self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
         self.clock = 1
         self.first = 1
@@ -331,7 +331,7 @@ class Game:
             self.Vshape((self.canvasWidth/2, -50))
         if self.stage == 5:
             self.loadEnemy((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
-                          math.pi/2, 10, (150, 150), True, -100)
+                          math.pi/2, 10, (150, 150), True, -120)
             self.frame.set_draw_handler(self.draw_handler)
             self.frame.set_keydown_handler(self.keyboard.keyDown)
             self.frame.set_keyup_handler(self.keyboard.keyUp)
@@ -414,6 +414,17 @@ class Game:
                      (self.background.get_width(), self.background.get_height()),
                      (self.canvasWidth/2, self.canvasHeight/2), (self.canvasWidth, self.canvasHeight))
         self.inter.update(canvas)
+        '''
+        score_label = "Score: " + str(self.score)
+        score_size = 30
+        score_width = self.frame.get_canvas_textwidth(score_label, score_size, "monospace")
+        canvas.draw_text(score_label, (self.width/2 - score_width/2, 250), score_size, "White", "monospace")
+        '''
+        healthLabel = "Lives: " + str(self.player.health)
+        canvas.draw_text(healthLabel, (20, 30), 20, "Red", "monospace")
+        scoreLabel = "Score: " + str(self.score)
+        canvas.draw_text(scoreLabel, (20, 60), 20, "Yellow", "monospace")
+        
         enemiesAlive = True
         if self.player.alive:
             self.player.draw(canvas)
@@ -434,6 +445,7 @@ class Game:
                     if self.checkShipCollision(self.player, enemy):
                         self.enemies.remove(enemy)
                         self.player.health -= 1
+                        self.score -= 200
                 else:
                     self.enemies.remove(enemy)
             
@@ -444,12 +456,22 @@ class Game:
                         enemy.health -= 1
                     if enemy.health == 0:
                         enemy.alive = False
+                        self.score += 100
+                    self.player.removeBullet(playerBullet)
+                elif playerBullet.pos[1] <= 0:
                     self.player.removeBullet(playerBullet)
                     
         for enemy in self.enemies:
             for enemyBullet in enemy.enemyBullets:
-                if self.checkBulletCollision(enemyBullet.pos, self.player):
-                    self.player.health -= 1
+                if not self.stage == 5:
+                    if self.checkBulletCollision(enemyBullet.pos, self.player):
+                        self.player.health -= 1
+                        enemy.removeBullet(enemyBullet)
+                else:
+                    if self.checkBulletCollision((enemyBullet.pos[0], enemyBullet.pos[1] + 150), self.player):
+                        self.player.health -= 1
+                        enemy.removeBullet(enemyBullet)
+                if enemyBullet.pos[1] >= self.canvasHeight:
                     enemy.removeBullet(enemyBullet)
                     
         if self.clock >= 140:
@@ -463,6 +485,7 @@ class Game:
         
         if self.player.health == 0:
             self.player.alive = False
+            endgame = Endgame(self.score, self.frame, "Game Over")
             
         if len(self.enemies) == 0:
             enemiesAlive = False
@@ -551,14 +574,18 @@ class Game:
             if self.enemies[0].pos.get_p()[1] < 100:
                 self.enemies[0].pos.y += 1
             else:
-                self.clock += 1
+                self.clock += 2
+                enemy = self.enemies[0]
+                enemy.shield = False
                 right = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
                 left = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
                 if right >= self.canvasWidth:
-                    self.first = -3
+                    self.first = -4
                 if left <= 0:
-                    self.first = 3
+                    self.first = 4
                 self.enemies[0].pos.x += self.first
+        elif self.stage == 6:
+            endgame = Endgame(self.score, self.frame, "You Win")
    
     def checkBulletCollision(self, bulletPos, ship):
         if ship.alive == False:
@@ -596,56 +623,59 @@ class Game:
         )
 
 class Endgame:
-    def __init_(self, score):
-        self.frame = simplegui.create_frame("Game Over", WIDTH, HEIGHT)
+    def __init__(self, score, frame, title):
+        self.frame = frame
         self.frame.set_draw_handler(self.draw)
         self.frame.set_mouseclick_handler(self.click)
         self.frame.start()
-        self.score
+        self.width, self.height = 800, 650
+        self.score = score
+        self.title = title
+        self.background_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
+        self.background = simplegui.load_image(self.background_url)
+        self.button_width = 160
+        self.button_height = 80
+        self.button_x = (self.width - self.button_width) // 2
+        self.button_y = 400
+        self.button_text = "Play Again"
         
-    def draw(canvas):
-        # Background
-        if background.get_width() > 0:
+    def draw(self, canvas):
+        if self.background.get_width() > 0:
             canvas.draw_image(
-                background,
-                (background.get_width() / 2, background.get_height() / 2),
-                (background.get_width(), background.get_height()),
-                (WIDTH / 2, HEIGHT / 2),
-                (WIDTH, HEIGHT)
+                self.background,
+                (self.background.get_width()/2, self.background.get_height()/2),
+                (self.background.get_width(), self.background.get_height()),
+                (self.width/2, self.height/2),
+                (self.width, self.height)
             )
+
+        title_size = 80
+        title_width = self.frame.get_canvas_textwidth(self.title, title_size, "monospace")
+        canvas.draw_text(self.title, (self.width/2 - title_width/2, 120), title_size, "White", "monospace")
     
-        # Game Over title
-        title = "GAME OVER"
-        title_size = 40
-        title_width = frame.get_canvas_textwidth(title, title_size, "monospace")
-        canvas.draw_text(title, ((WIDTH - title_width) // 2, 80), title_size, "White", "monospace")
-    
-        # Score
         score_label = "Score: " + str(self.score)
-        score_size = 24
-        score_width = frame.get_canvas_textwidth(score_label, score_size, "monospace")
-        canvas.draw_text(score_label, ((WIDTH - score_width) // 2, 150), score_size, "White", "monospace")
+        score_size = 30
+        score_width = self.frame.get_canvas_textwidth(score_label, score_size, "monospace")
+        canvas.draw_text(score_label, (self.width/2 - score_width/2, 250), score_size, "White", "monospace")
     
-        # Button
         canvas.draw_polygon(
-            [(button_x, button_y),
-             (button_x + button_width, button_y),
-             (button_x + button_width, button_y + button_height),
-             (button_x, button_y + button_height)],
+            [(self.button_x, self.button_y),
+             (self.button_x + self.button_width, self.button_y),
+             (self.button_x + self.button_width, self.button_y + self.button_height),
+             (self.button_x, self.button_y + self.button_height)],
             2, "White", "Gray"
         )
     
-        text_size = 20
-        text_width = frame.get_canvas_textwidth(button_text, text_size, "monospace")
-        canvas.draw_text(button_text, ((button_x + (button_width - text_width) // 2), button_y + 28), text_size, "White", "monospace")
+        text_size = 27
+        text_width = self.frame.get_canvas_textwidth(self.button_text, text_size, "monospace")
+        canvas.draw_text(self.button_text, ((self.button_x + (self.button_width - text_width) // 2), self.button_y + 42), text_size, "White", "monospace")
     
-    # Handle mouse click
-    def click(pos):
+    def click(self, pos):
         x, y = pos
-        if button_x <= x <= button_x + button_width and button_y <= y <= button_y + button_height:
-            print("Play Again clicked")
-            score.reset()
-            # You can add logic to go back to start screen here
+        if self.button_x <= x <= self.button_x + self.button_width:
+            if self.button_y <= y <= self.button_y + self.button_height:
+                game = Game(self.frame)
+                game.runGame()
         
 class Menu:
     def __init__(self):
@@ -672,6 +702,7 @@ class Menu:
         self.frame.set_draw_handler(self.draw)
         self.frame.set_mouseclick_handler(self.click)
         self.frame.start()
+        self.buttonDisabled = False
 
     def draw(self, canvas):
         if self.background.get_width() > 0:
@@ -709,6 +740,8 @@ class Menu:
         x, y = pos
         if self.start_x <= x <= self.start_x + self.start_width:
             if self.start_y <= y <= self.start_y + self.start_height:
-                self.game.runGame()
+                if not self.buttonDisabled:
+                    self.buttonDisabled = True
+                    self.game.runGame()
         
 menu = Menu()
