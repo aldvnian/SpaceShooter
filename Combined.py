@@ -314,7 +314,7 @@ class Game:
         self.keyboard = Keyboard()
         self.inter = Interaction(self.player, self.keyboard)
         self.enemies = []
-        self.stage = 5
+        self.stage = 1
         self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
         self.clock = 1
         self.first = 1
@@ -767,5 +767,24 @@ class Menu:
                 if not self.buttonDisabled:
                     self.buttonDisabled = True
                     self.game.runGame()
-        
+
+                    
+backgroundMusic = simplegui.load_sound("https://aldvnian.github.io/Spaceshooter-sprites/stranger-things-124008.mp3")
+musicDuration = 156 * 1000
+
+def playMusic():
+    backgroundMusic.play()
+    timer.start()
+
+def restartMusic():
+    backgroundMusic.rewind()
+    backgroundMusic.play()
+    
+def pauseMusic():
+    backgroundMusic.pause()
+    timer.stop()
+
+timer = simplegui.create_timer(musicDuration, restartMusic)
+playMusic()
+
 menu = Menu()
