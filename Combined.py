@@ -702,7 +702,7 @@ class Endgame:
                 game.runGame()
         
 class Menu:
-    def __init__(self):
+    def __init__(self, frame):
         self.canvas_width = 800
         self.canvas_height = 650
         self.background = simplegui.load_image("https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg")
@@ -721,7 +721,7 @@ class Menu:
         self.start_x = self.canvas_width/2 - self.start_width/2
         self.start_y = self.canvas_height - 150
         self.start_text = "Start"
-        self.frame = simplegui.create_frame("Space Raider Game", self.canvas_width, self.canvas_height)
+        self.frame = frame
         self.game = Game(self.frame)
         self.frame.set_draw_handler(self.draw)
         self.frame.set_mouseclick_handler(self.click)
@@ -785,7 +785,6 @@ def pauseMusic():
     timer.stop()
 
 timer = simplegui.create_timer(musicDuration, restartMusic)
-playMusic()
 
 class Story:
      def __init__(self):
@@ -815,6 +814,7 @@ class Story:
          self.frame = simplegui.create_frame("Story", self.canvas_width, self.canvas_height)
          self.frame.set_draw_handler(self.draw)
          self.frame.set_mouseclick_handler(self.click)
+         playMusic()
          
      def draw(self, canvas):
          if self.background.get_width() > 0:
@@ -828,7 +828,7 @@ class Story:
  
          
          title_width = self.frame.get_canvas_textwidth(self.title, self.title_size, self.title_font)
-         canvas.draw_text(self.title, [(self.canvas_width - title_width) // 2, 40], self.title_size, "White", self.title_font)
+         canvas.draw_text(self.title, [(self.canvas_width - title_width) // 2, 80], self.title_size, "White", self.title_font)
  
          
          y_offset = 200
@@ -855,8 +855,7 @@ class Story:
         
          x, y = pos
          if self.button_x <= x <= self.button_x + self.button_width and self.button_y <= y <= self.button_y + self.button_height:
-             self.frame.stop()
-             menu = Menu()
+             menu = Menu(self.frame)
              
  
  
