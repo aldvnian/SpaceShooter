@@ -499,7 +499,7 @@ class Game:
             else:
                 self.enemyShoot("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot5/shot5_1.png")
         
-        if self.player.health == 0:
+        if self.player.health <= 0:
             self.player.alive = False
             endgame = Endgame(self.score, self.frame, "Game Over")
             
