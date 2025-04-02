@@ -155,7 +155,7 @@ class Player(Spaceship):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.boost.centreDest = (self.centreDest[0], self.centreDest[1] + 55)
-        self.shot_animation.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
+        
         self.vel.multiply(0.73)
 
         
@@ -783,15 +783,15 @@ timer = simplegui.create_timer(musicDuration, restartMusic)
 
 class Story:
      def __init__(self):
-         self.canvas_width = 800
-         self.canvas_height = 650
-         self.background_url = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
-         self.background = simplegui.load_image(self.background_url)
+         self.canvasWidth = 800
+         self.canvasHeight = 650
+         self.backgroundUrl = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
+         self.background = simplegui.load_image(self.backgroundUrl)
          self.title = "Space Raider Origin Story"
-         self.title_size = 45
-         self.title_font = "monospace"
+         self.titleSize = 45
+         self.titleFont = "monospace"
  
-         self.story_text = [
+         self.storyText = [
              "In the year 4035",
              "The Aliens have invaded our universe",
              "The Galactic Defense Federation is falling",
@@ -799,14 +799,14 @@ class Story:
              "Pilot your trusty spaceship and save humanity from the aliens",
              "and uncover the truth behind their invasion...",
          ]
-         self.button_width = 150
-         self.button_height = 50
-         self.button_x = (self.canvas_width - self.button_width) // 2
-         self.button_y = 500
-         self.button_text = "Play"
-         self.button_text_size = 32
+         self.buttonWidth = 150
+         self.buttonHeight = 50
+         self.buttonX = (self.canvasWidth - self.buttonWidth) // 2
+         self.buttonY = 500
+         self.buttonText = "Play"
+         self.buttonTextSize = 32
          
-         self.frame = simplegui.create_frame("Story", self.canvas_width, self.canvas_height)
+         self.frame = simplegui.create_frame("Story", self.canvasWidth, self.canvasHeight)
          self.frame.set_draw_handler(self.draw)
          self.frame.set_mouseclick_handler(self.click)
          playMusic()
@@ -817,39 +817,39 @@ class Story:
                  self.background, 
                  (self.background.get_width()/2, self.background.get_height()/2), 
                  (self.background.get_width(), self.background.get_height()), 
-                 (self.canvas_width/2, self.canvas_height/2), 
-                 (self.canvas_width, self.canvas_height)
+                 (self.canvasWidth/2, self.canvasHeight/2), 
+                 (self.canvasWidth, self.canvasHeight)
              )
  
          
-         title_width = self.frame.get_canvas_textwidth(self.title, self.title_size, self.title_font)
-         canvas.draw_text(self.title, [(self.canvas_width - title_width) // 2, 80], self.title_size, "White", self.title_font)
+         titleWidth = self.frame.get_canvas_textwidth(self.title, self.titleSize, self.titleFont)
+         canvas.draw_text(self.title, [(self.canvasWidth - titleWidth) // 2, 80], self.titleSize, "White", self.titleFont)
  
          
-         y_offset = 200
-         for line in self.story_text:
-             text_width = self.frame.get_canvas_textwidth(line, 20, "serif")+ 20
-             canvas.draw_text(line, [(self.canvas_width - text_width) // 2, y_offset], 22, "White", "serif")
-             y_offset += 30
+         yOffset = 200
+         for line in self.storyText:
+             textWidth = self.frame.get_canvas_textwidth(line, 20, "serif") + 20
+             canvas.draw_text(line, [(self.canvasWidth - textWidth) // 2, yOffset], 22, "White", "serif")
+             yOffset += 30
  
              
          canvas.draw_polygon(
-             [(self.button_x, self.button_y), (self.button_x + self.button_width, self.button_y),
-              (self.button_x + self.button_width, self.button_y + self.button_height),
-              (self.button_x, self.button_y + self.button_height)],
+             [(self.buttonX, self.buttonY), (self.buttonX + self.buttonWidth, self.buttonY),
+              (self.buttonX + self.buttonWidth, self.buttonY + self.buttonHeight),
+              (self.buttonX, self.buttonY + self.buttonHeight)],
              2, "White", "Gray"
          )
  
          
-         text_width = self.frame.get_canvas_textwidth(self.button_text, self.button_text_size, self.title_font)
-         canvas.draw_text(self.button_text,
-                  [(self.button_x + (self.button_width - text_width) / 2), self.button_y + (self.button_height // 2) + (self.button_text_size // 3)],  
-                  self.button_text_size, "White", self.title_font)
+         textWidth = self.frame.get_canvas_textwidth(self.buttonText, self.buttonTextSize, self.titleFont)
+         canvas.draw_text(self.buttonText,
+                  [(self.buttonX + (self.buttonWidth - textWidth) / 2), self.buttonY + (self.buttonHeight // 2) + (self.buttonTextSize // 3)],  
+                  self.buttonTextSize, "White", self.titleFont)
  
      def click(self, pos):
         
          x, y = pos
-         if self.button_x <= x <= self.button_x + self.button_width and self.button_y <= y <= self.button_y + self.button_height:
+         if self.buttonX <= x <= self.buttonX + self.buttonWidth and self.buttonY <= y <= self.buttonY + self.buttonHeight:
              menu = Menu(self.frame)
              
  
