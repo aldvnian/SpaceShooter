@@ -78,9 +78,6 @@ class Spaceship():
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
 
-    def move(self, coordinate):
-        self.centreDest = coordinate
-
     def update(self):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
