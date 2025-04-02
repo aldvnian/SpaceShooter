@@ -107,8 +107,6 @@ class Player(Spaceship):
         self.moving = False
         self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
-        self.shot_animation = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
-                               2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
         self.borderRight = canvasWidth - self.widthHeightDest[0]/2 - 15
         self.borderLeft = self.widthHeightDest[0]/2 + 50
         self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
