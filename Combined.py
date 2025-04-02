@@ -2,6 +2,7 @@ import simplegui, math, random
 from user304_rsf8mD0BOQ_1 import Vector
 
 class Spritesheet:
+    """Handles animated spritesheets for game objects"""
     def __init__(self, url, rows, columns, center_dest, size_drawn, rotation, num_frames):
         self.url = url
         self.rows = rows
@@ -24,6 +25,7 @@ class Spritesheet:
         self.frameCentreY = self.frameHeight / 2
         
     def draw(self, canvas):
+        """Draw current animation frame and handle frame progression"""
         if self.orgSize[0] > 0:
             sourceCentre = (
                 self.frameIndex[0] * self.frameWidth + self.frameCentreX,
@@ -37,6 +39,7 @@ class Spritesheet:
                 self.clock = 0
     
     def drawFrame(self, canvas, countFrame):
+        """Draw one frame and handle frame progression"""
         while self.orgSize[0] == 0:
             self.image = simplegui.load_image(self.url)
             self.orgSize = (self.image.get_width(), self.image.get_height())
@@ -55,6 +58,7 @@ class Spritesheet:
                 self.next()
                 
     def next(self):
+        """Advance to next frame in the animation sequence"""
         if self.frameIndex[1] == self.rows - 1 and self.rows != 1:
             self.frameIndex[0] = (self.frameIndex[0] + 1) % self.extraFrames
         else:
@@ -63,6 +67,7 @@ class Spritesheet:
             self.frameIndex[1] = (self.frameIndex[1] + 1) % self.rows
    
 class Spaceship():
+    """Base class for all space vehicles e.g. Player ship, enemy ships"""
     def __init__(self, shipImageURL, pos, startingRotation, canvasWidth, canvasHeight):
         self.pos = Vector(pos[0], pos[1])
         self.vel = Vector()
@@ -74,16 +79,19 @@ class Spaceship():
         self.canvasHeight = canvasHeight
 
     def draw(self, canvas):
+        """Render spaceship at current position"""
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
 
     def update(self):
+        """Update position based on velocity"""
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.vel.multiply(0.73)
         
 class Bullet:
+    """Represents a projectile fired by spaceships"""
     def __init__(self, imgURL, centreDest, size, rotation):
         self.image = simplegui.load_image(imgURL)
         self.pos = centreDest
@@ -92,6 +100,7 @@ class Bullet:
         
         
     def draw(self, canvas):
+        """Draw bullet on canvas if image is loaded"""
         if self.image.get_width() > 0:
             canvas.draw_image(self.image, (self.image.get_width()/2, self.image.get_height()/2),
                              (self.image.get_width(), self.image.get_height()),
@@ -99,9 +108,11 @@ class Bullet:
                              self.rotation)
         
     def update(self, posAdder):
+        """Update bullet position vertically"""
         self.pos = (self.pos[0], self.pos[1] + posAdder)
         
 class Player(Spaceship):
+    """Player-controlled spaceship that can fire bullets"""
     def __init__(self, shipImageURL, startingRotation, canvasWidth, canvasHeight):
         super().__init__(shipImageURL, (canvasWidth/2, canvasHeight - 70), startingRotation, canvasWidth, canvasHeight)
         self.moving = False
@@ -126,6 +137,7 @@ class Player(Spaceship):
                 bullet.update(-4)
     
     def loadBullet(self):
+        """Create new player bullet projectiles"""
         self.shots.append(Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
                                 (self.pos.x, self.pos.y - 70),
                                 (120, 120),
@@ -159,6 +171,7 @@ class Player(Spaceship):
 
         
 class Enemy(Spaceship):
+    """Enemy spacecraft with scripted movement patterns and ability to shoot projectiles"""
     def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest, shoots, bulletPosFixer):
         super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
         self.enemyWidthHeightDest = widthHeightDest
@@ -173,6 +186,7 @@ class Enemy(Spaceship):
                                            1, 7, self.pos, (133, 133), math.pi/2, 7)
        
     def draw(self, canvas):
+        """Draw enemy or explosion animation if destroyed"""
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         if self.shipImage.get_width() > 0:
@@ -185,14 +199,17 @@ class Enemy(Spaceship):
                     self.enemyExplosion = None
         
     def loadBullet(self, url, size):
+        """Spawn new enemy bulllets"""
         newEnemyBullet = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2 + self.bulletFixer), size, -math.pi/2)
         self.enemyBullets.append(newEnemyBullet)
         
     def removeBullet(self, bullet):
+        """Cleanup expired projectiles"""
         if bullet in self.enemyBullets:
             self.enemyBullets.remove(bullet)
     
     def update(self):
+        """Update position and projectile states"""
         super().update()
         for bullet in self.enemyBullets:
             bullet.update(4)
@@ -200,14 +217,17 @@ class Enemy(Spaceship):
                 self.removeBullet(bullet)
                 
     def getWidth(self):
+        """Get collision width for formation logic"""
         return self.enemyWidthHeightDest[0]
     
     def getHeight(self):
+        """Get collision height for formation logic"""
         return self.enemyWidthHeightDest[1]
     
           
         
 class Keyboard:
+    """Handles keyboard input states"""
     def __init__(self):
         self.right = False
         self.left = False
@@ -220,6 +240,7 @@ class Keyboard:
         self.downKeyDown = False
         
     def keyDown(self, key):
+        """Update key states on key press"""
         if key == simplegui.KEY_MAP['right']:
             if self.left == True:
                 self.left = False
@@ -244,6 +265,7 @@ class Keyboard:
             self.space = True
 
     def keyUp(self, key):
+        """Update key states on key release"""
         if key == simplegui.KEY_MAP['right']:
             self.rightKeyDown = False
             self.right = False
@@ -268,6 +290,7 @@ class Keyboard:
             self.space = False
                 
 class Interaction:
+    """Manages interactions between player input and game state"""
     def __init__(self, player, keyboard):
         self.player = player
         self.keyboard = keyboard
@@ -275,6 +298,7 @@ class Interaction:
         self.space_down = False
         
     def update(self, canvas):
+        """Process player input and update game state"""
         self.player.inBorder()
         if self.keyboard.up:
             self.player.vel.add(Vector(0, -1))
@@ -299,6 +323,7 @@ class Interaction:
         self.bullet_timer += 1
 
 class Game:
+    """Main game controller managing game state and entities"""
     def __init__(self, frame):
         self.canvasWidth = 800
         self.canvasHeight = 650
@@ -317,6 +342,7 @@ class Game:
         
         
     def runGame(self):
+        """Initialize game entities based on current stage"""
         if self.stage == 1:
             self.trioFormation((80, -100))
             self.trioFormation((350, -100))
@@ -431,6 +457,7 @@ class Game:
         
         
     def draw_handler(self, canvas):
+        """Main game loop handler - called every frame"""
         canvas.draw_image(self.background, (self.background.get_width()/2, self.background.get_height()/2),
                      (self.background.get_width(), self.background.get_height()),
                      (self.canvasWidth/2, self.canvasHeight/2), (self.canvasWidth, self.canvasHeight))
@@ -499,7 +526,7 @@ class Game:
             else:
                 self.enemyShoot("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Shots/Shot5/shot5_1.png")
         
-        if self.player.health <= 0:
+        if self.player.health == 0:
             self.player.alive = False
             endgame = Endgame(self.score, self.frame, "Game Over")
             
@@ -641,6 +668,7 @@ class Game:
         )
 
 class Endgame:
+    """Endgame screen showing final score"""
     def __init__(self, score, frame, title):
         self.frame = frame
         self.frame.set_draw_handler(self.draw)
@@ -696,6 +724,7 @@ class Endgame:
                 game.runGame()
         
 class Menu:
+    """Main menu screen"""
     def __init__(self, frame):
         self.canvas_width = 800
         self.canvas_height = 650
@@ -767,6 +796,7 @@ backgroundMusic = simplegui.load_sound("https://aldvnian.github.io/Spaceshooter-
 musicDuration = 156 * 1000
 
 def playMusic():
+    """Start background music playback"""
     backgroundMusic.play()
     timer.start()
 
@@ -781,7 +811,8 @@ def pauseMusic():
 timer = simplegui.create_timer(musicDuration, restartMusic)
 
 class Story:
-     def __init__(self):
+    """Intro story screen"""
+    def __init__(self):
          self.canvasWidth = 800
          self.canvasHeight = 650
          self.backgroundUrl = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
@@ -810,7 +841,7 @@ class Story:
          self.frame.set_mouseclick_handler(self.click)
          playMusic()
          
-     def draw(self, canvas):
+    def draw(self, canvas):
          if self.background.get_width() > 0:
              canvas.draw_image(
                  self.background, 
@@ -845,7 +876,7 @@ class Story:
                   [(self.buttonX + (self.buttonWidth - textWidth) / 2), self.buttonY + (self.buttonHeight // 2) + (self.buttonTextSize // 3)],  
                   self.buttonTextSize, "White", self.titleFont)
  
-     def click(self, pos):
+    def click(self, pos):
          x, y = pos
          if (self.buttonX <= x <= self.buttonX + self.buttonWidth):
             if (self.buttonY <= y <= self.buttonY + self.buttonHeight):
