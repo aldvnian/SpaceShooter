@@ -155,7 +155,6 @@ class Player(Spaceship):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.boost.centreDest = (self.centreDest[0], self.centreDest[1] + 55)
-        
         self.vel.multiply(0.73)
 
         
