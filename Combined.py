@@ -846,10 +846,10 @@ class Story:
                   self.buttonTextSize, "White", self.titleFont)
  
      def click(self, pos):
-        
          x, y = pos
-         if self.buttonX <= x <= self.buttonX + self.buttonWidth and self.buttonY <= y <= self.buttonY + self.buttonHeight:
-             menu = Menu(self.frame)
+         if (self.buttonX <= x <= self.buttonX + self.buttonWidth):
+            if (self.buttonY <= y <= self.buttonY + self.buttonHeight):
+                menu = Menu(self.frame)
              
  
  
