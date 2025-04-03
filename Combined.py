@@ -2,6 +2,7 @@ import simplegui, math, random
 from user304_rsf8mD0BOQ_1 import Vector
 
 class Spritesheet:
+    """Handles animated spritesheets for game objects"""
     def __init__(self, url, rows, columns, center_dest, size_drawn, rotation, num_frames):
         self.url = url
         self.rows = rows
@@ -15,6 +16,7 @@ class Spritesheet:
         self.rotation = rotation
         self.sizeDrawn = size_drawn
         self.clock = 0
+        self.complete = 0
         
     def _init_dimension(self):
         self.frameWidth = self.orgSize[0] / self.columns
@@ -23,6 +25,7 @@ class Spritesheet:
         self.frameCentreY = self.frameHeight / 2
         
     def draw(self, canvas):
+        """Draw current animation frame and handle frame progression"""
         if self.orgSize[0] > 0:
             sourceCentre = (
                 self.frameIndex[0] * self.frameWidth + self.frameCentreX,
@@ -34,47 +37,71 @@ class Spritesheet:
             if self.clock == 20:
                 self.next()
                 self.clock = 0
-        
+    
+    def drawFrame(self, canvas, countFrame):
+        """Draw one frame and handle frame progression"""
+        while self.orgSize[0] == 0:
+            self.image = simplegui.load_image(self.url)
+            self.orgSize = (self.image.get_width(), self.image.get_height())
+            self._init_dimension()
+        sourceCentre = (
+            self.frameIndex[0] * self.frameWidth + self.frameCentreX,
+            self.frameIndex[1] * self.frameHeight + self.frameCentreY
+        )
+        sourceSize = (self.frameWidth, self.frameHeight)
+        canvas.draw_image(self.image, sourceCentre, sourceSize, self.centreDest, self.sizeDrawn, self.rotation)
+        self.clock += 1
+        if self.clock >= 10:
+            if self.complete < countFrame:
+                self.clock = 0
+                self.complete += 1
+                self.next()
+                
     def next(self):
+        """Advance to next frame in the animation sequence"""
         if self.frameIndex[1] == self.rows - 1 and self.rows != 1:
             self.frameIndex[0] = (self.frameIndex[0] + 1) % self.extraFrames
         else:
             self.frameIndex[0] = (self.frameIndex[0] + 1) % self.columns
         if self.frameIndex[0] == 0:
             self.frameIndex[1] = (self.frameIndex[1] + 1) % self.rows
-            
+ 
+   
 class Spaceship():
+    """Base class for all space vehicles e.g. Player ship, enemy ships"""
     def __init__(self, shipImageURL, pos, startingRotation, canvasWidth, canvasHeight):
         self.pos = Vector(pos[0], pos[1])
         self.vel = Vector()
         self.shipImage = simplegui.load_image(shipImageURL)
-        self.widthHeightDest = (90, 90)
+        self.widthHeightDest = (80, 80)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.currentRotation = startingRotation
         self.canvasWidth = canvasWidth
         self.canvasHeight = canvasHeight
 
     def draw(self, canvas):
+        """Render spaceship at current position"""
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.widthHeightDest, self.currentRotation)
 
-    def move(self, coordinate):
-        self.centreDest = coordinate
-
     def update(self):
+        """Update position based on velocity"""
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.vel.multiply(0.73)
         
 class Bullet:
+    """Represents a projectile fired by spaceships"""
     def __init__(self, imgURL, centreDest, size, rotation):
         self.image = simplegui.load_image(imgURL)
         self.pos = centreDest
         self.size = size
         self.rotation = rotation
         
+        
     def draw(self, canvas):
+        """Draw bullet on canvas if image is loaded"""
         if self.image.get_width() > 0:
             canvas.draw_image(self.image, (self.image.get_width()/2, self.image.get_height()/2),
                              (self.image.get_width(), self.image.get_height()),
@@ -82,24 +109,20 @@ class Bullet:
                              self.rotation)
         
     def update(self, posAdder):
+        """Update bullet position vertically"""
         self.pos = (self.pos[0], self.pos[1] + posAdder)
         
-    def animation(self):
-        pass
-        
-        
 class Player(Spaceship):
+    """Player-controlled spaceship that can fire bullets"""
     def __init__(self, shipImageURL, startingRotation, canvasWidth, canvasHeight):
         super().__init__(shipImageURL, (canvasWidth/2, canvasHeight - 70), startingRotation, canvasWidth, canvasHeight)
         self.moving = False
         self.boost = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship6/Exhaust/Normal_flight/Exhaust1/boost_animation_sprite.png", 
                                 1, 4, (self.pos.x, self.pos.y + 55), (40, 40), math.pi/2, 4)
-        self.shot_animation = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/Shot6_spritesheet.png",
-                               2, 12, (self.pos.x, self.pos.y - 70), (80, 80), -math.pi/2, 15)
-        self.borderRight = canvasWidth - self.widthHeightDest[0]/2
-        self.borderLeft = self.widthHeightDest[0]/2
+        self.borderRight = canvasWidth - self.widthHeightDest[0]/2 - 15
+        self.borderLeft = self.widthHeightDest[0]/2 + 50
         self.borderUp = canvasHeight/2 + self.widthHeightDest[1]/2
-        self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 50
+        self.borderDown = canvasHeight - self.widthHeightDest[1]/2 - 15
         self.shoot = False
         self.shots = []
         self.alive = True
@@ -115,10 +138,12 @@ class Player(Spaceship):
                 bullet.update(-4)
     
     def loadBullet(self):
+        """Create new player bullet projectiles"""
         self.shots.append(Bullet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Shots/Shot6/shot6_3.png",
-                                    (self.pos.x, self.pos.y - 70),
-                                    (120, 120),
-                                    -math.pi/2))
+                                (self.pos.x, self.pos.y - 70),
+                                (120, 120),
+                                -math.pi/2,
+                         ))
     
     def removeBullet(self, bullet):
         if bullet in self.shots:
@@ -143,12 +168,12 @@ class Player(Spaceship):
         self.pos.add(self.vel)
         self.centreDest = (self.pos.get_p()[0], self.pos.get_p()[1])
         self.boost.centreDest = (self.centreDest[0], self.centreDest[1] + 55)
-        self.shot_animation.centreDest = (self.centreDest[0], self.centreDest[1] - 70)
         self.vel.multiply(0.73)
 
         
 class Enemy(Spaceship):
-    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest, shoots, bulletPosFixer):
+    """Enemy spacecraft with scripted movement patterns and ability to shoot projectiles"""
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest, shoots):
         super().__init__(enemyShipImageURL, pos, startingRotation, canvasWidth, canvasHeight)
         self.enemyWidthHeightDest = widthHeightDest
         self.current_rotation = math.pi/2
@@ -157,23 +182,34 @@ class Enemy(Spaceship):
         self.health = health
         self.shield = True
         self.shoots = shoots
-        self.bulletFixer = bulletPosFixer
-               
+        self.enemyExplosion = Spritesheet("https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Animations/Explosions/Ship1_Explosion/Enemy_Explosion_Spritesheet1.png",
+                                           1, 7, self.pos, (133, 133), math.pi/2, 7)
+       
     def draw(self, canvas):
+        """Draw enemy or explosion animation if destroyed"""
         centre = (self.shipImage.get_width()/2, self.shipImage.get_height()/2)
         widthHeightSource = (self.shipImage.get_width(), self.shipImage.get_height())
         if self.shipImage.get_width() > 0:
             canvas.draw_image(self.shipImage, centre, widthHeightSource, self.centreDest, self.enemyWidthHeightDest, self.current_rotation)
+        if self.alive == False:
+            if self.enemyExplosion is not None:
+                self.enemyExplosion.centreDest = (self.pos.x, self.pos.y)
+                self.enemyExplosion.drawFrame(canvas, 7)
+                if self.enemyExplosion.complete >= 7:
+                    self.enemyExplosion = None
         
     def loadBullet(self, url, size):
-        newEnemyBullet = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2 + self.bulletFixer), size, -math.pi/2)
+        """Spawn new enemy bulllets"""
+        newEnemyBullet = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2), size, -math.pi/2)
         self.enemyBullets.append(newEnemyBullet)
         
     def removeBullet(self, bullet):
+        """Cleanup expired projectiles"""
         if bullet in self.enemyBullets:
             self.enemyBullets.remove(bullet)
     
     def update(self):
+        """Update position and projectile states"""
         super().update()
         for bullet in self.enemyBullets:
             bullet.update(4)
@@ -181,13 +217,42 @@ class Enemy(Spaceship):
                 self.removeBullet(bullet)
                 
     def getWidth(self):
+        """Get collision width for formation logic"""
         return self.enemyWidthHeightDest[0]
     
     def getHeight(self):
+        """Get collision height for formation logic"""
         return self.enemyWidthHeightDest[1]
-          
+    
+    
+class Boss(Enemy):
+    def __init__(self, pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest):
+        super().__init__(pos, enemyShipImageURL, startingRotation, canvasWidth, canvasHeight, health, widthHeightDest, shoots = True)
         
+    def loadBullet(self, url, size):
+        newEnemyBullet1 = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2 - 120), size, -math.pi/2)
+        self.enemyBullets.append(newEnemyBullet1)
+        newEnemyBullet2 = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2 - 120), size, -math.pi/2)
+        self.enemyBullets.append(newEnemyBullet2)
+        newEnemyBullet3 = Bullet(url, (self.pos.x, self.pos.y + self.enemyWidthHeightDest[1]/2 - 120), size, -math.pi/2)
+        self.enemyBullets.append(newEnemyBullet3)
+        
+    def removeBullet(self, bullets):
+        for bullet in bullets:
+            self.enemyBullets.remove(bullet)
+            
+    def update(self):
+        Spaceship.update(self)
+        bulletsRemoved = []
+        for bullet in self.enemyBullets:
+            bullet.update(4)
+            if bullet.pos[1] > self.canvasHeight:
+                bulletsRemoved.append(bullet)
+        self.removeBullet(bulletsRemoved)
+        
+
 class Keyboard:
+    """Handles keyboard input states"""
     def __init__(self):
         self.right = False
         self.left = False
@@ -200,6 +265,7 @@ class Keyboard:
         self.downKeyDown = False
         
     def keyDown(self, key):
+        """Update key states on key press"""
         if key == simplegui.KEY_MAP['right']:
             if self.left == True:
                 self.left = False
@@ -224,6 +290,7 @@ class Keyboard:
             self.space = True
 
     def keyUp(self, key):
+        """Update key states on key release"""
         if key == simplegui.KEY_MAP['right']:
             self.rightKeyDown = False
             self.right = False
@@ -248,6 +315,7 @@ class Keyboard:
             self.space = False
                 
 class Interaction:
+    """Manages interactions between player input and game state"""
     def __init__(self, player, keyboard):
         self.player = player
         self.keyboard = keyboard
@@ -255,6 +323,7 @@ class Interaction:
         self.space_down = False
         
     def update(self, canvas):
+        """Process player input and update game state"""
         self.player.inBorder()
         if self.keyboard.up:
             self.player.vel.add(Vector(0, -1))
@@ -279,6 +348,7 @@ class Interaction:
         self.bullet_timer += 1
 
 class Game:
+    """Main game controller managing game state and entities"""
     def __init__(self, frame):
         self.canvasWidth = 800
         self.canvasHeight = 650
@@ -288,7 +358,7 @@ class Game:
         self.keyboard = Keyboard()
         self.inter = Interaction(self.player, self.keyboard)
         self.enemies = []
-        self.stage = 1
+        self.stage = 5
         self.background = simplegui.load_image("https://aldvnian.github.io/Spaceshooter-sprites/Background.png")
         self.clock = 1
         self.first = 1
@@ -297,6 +367,7 @@ class Game:
         
         
     def runGame(self):
+        """Initialize game entities based on current stage"""
         if self.stage == 1:
             self.trioFormation((80, -100))
             self.trioFormation((350, -100))
@@ -330,8 +401,9 @@ class Game:
         if self.stage == 4:
             self.Vshape((self.canvasWidth/2, -50))
         if self.stage == 5:
-            self.loadEnemy((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
-                          math.pi/2, 10, (150, 150), True, -120)
+            boss = Boss((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
+                        math.pi/2, self.canvasWidth, self.canvasHeight, 20, (150, 150))
+            self.enemies.append(boss)
             self.frame.set_draw_handler(self.draw_handler)
             self.frame.set_keydown_handler(self.keyboard.keyDown)
             self.frame.set_keyup_handler(self.keyboard.keyUp)
@@ -409,17 +481,13 @@ class Game:
                               math.pi/2, 3, (100, 100), True, 0)
         self.frame.start()
         
+        
     def draw_handler(self, canvas):
+        """Main game loop handler - called every frame"""
         canvas.draw_image(self.background, (self.background.get_width()/2, self.background.get_height()/2),
                      (self.background.get_width(), self.background.get_height()),
                      (self.canvasWidth/2, self.canvasHeight/2), (self.canvasWidth, self.canvasHeight))
         self.inter.update(canvas)
-        '''
-        score_label = "Score: " + str(self.score)
-        score_size = 30
-        score_width = self.frame.get_canvas_textwidth(score_label, score_size, "monospace")
-        canvas.draw_text(score_label, (self.width/2 - score_width/2, 250), score_size, "White", "monospace")
-        '''
         healthLabel = "Lives: " + str(self.player.health)
         canvas.draw_text(healthLabel, (20, 30), 20, "Red", "monospace")
         scoreLabel = "Score: " + str(self.score)
@@ -436,18 +504,19 @@ class Game:
             for bullet in enemy.enemyBullets:
                 bullet.draw(canvas)
             if enemy.alive == False:
-                if enemy.pos.get_p()[1] < self.canvasHeight + enemy.enemyWidthHeightDest[1]:
-                    enemy.current_rotation += 0.2
-                    if self.stage == 1:
-                        enemy.vel = Vector(0, 2)
+                if enemy.enemyExplosion == None:
+                    if enemy.pos.get_p()[1] < self.canvasHeight + enemy.enemyWidthHeightDest[1]:
+                        enemy.current_rotation += 0.2
+                        if self.stage == 1:
+                            enemy.vel = Vector(0, 2)
+                        else:
+                            enemy.vel = Vector(0, 4)
+                        if self.checkShipCollision(self.player, enemy):
+                            self.enemies.remove(enemy)
+                            self.player.health -= 1
+                            self.score -= 200
                     else:
-                        enemy.vel = Vector(0, 4)
-                    if self.checkShipCollision(self.player, enemy):
                         self.enemies.remove(enemy)
-                        self.player.health -= 1
-                        self.score -= 200
-                else:
-                    self.enemies.remove(enemy)
             
         for playerBullet in self.player.shots:
             for enemy in self.enemies:
@@ -539,22 +608,22 @@ class Game:
                     secondRight = self.enemies[1].pos.get_p()[0] + self.enemies[1].enemyWidthHeightDest[0]/2
                     secondLeft = self.enemies[1].pos.get_p()[0] - self.enemies[1].enemyWidthHeightDest[0]/2
                     if firstRight >= self.canvasWidth:
-                        self.first = -1
+                        self.first = -2
                     if firstLeft <= 0:
-                        self.first = 1
+                        self.first = 2
                     if secondRight >= self.canvasWidth:
-                        self.second = -1
+                        self.second = -2
                     if secondLeft <= 0:
-                        self.second = 1
+                        self.second = 2
                     self.enemies[0].pos.x += self.first
                     self.enemies[1].pos.x += self.second
                 else:
                     firstRight = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
                     firstLeft = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
                     if firstRight >= self.canvasWidth:
-                        self.first = -1
+                        self.first = -2
                     if firstLeft <= 0:
-                        self.first = 1
+                        self.first = 2
                     self.enemies[0].pos.x += self.first
         elif self.stage == 4:
             self.first = 3
@@ -574,7 +643,7 @@ class Game:
             if self.enemies[0].pos.get_p()[1] < 100:
                 self.enemies[0].pos.y += 1
             else:
-                self.clock += 2
+                self.clock += 4
                 enemy = self.enemies[0]
                 enemy.shield = False
                 right = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
@@ -585,7 +654,9 @@ class Game:
                     self.first = 4
                 self.enemies[0].pos.x += self.first
         elif self.stage == 6:
+            self.score += 900
             endgame = Endgame(self.score, self.frame, "You Win")
+                  
    
     def checkBulletCollision(self, bulletPos, ship):
         if ship.alive == False:
@@ -623,6 +694,7 @@ class Game:
         )
 
 class Endgame:
+    """Endgame screen showing final score"""
     def __init__(self, score, frame, title):
         self.frame = frame
         self.frame.set_draw_handler(self.draw)
@@ -678,7 +750,8 @@ class Endgame:
                 game.runGame()
         
 class Menu:
-    def __init__(self):
+    """Main menu screen"""
+    def __init__(self, frame):
         self.canvas_width = 800
         self.canvas_height = 650
         self.background = simplegui.load_image("https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg")
@@ -697,7 +770,7 @@ class Menu:
         self.start_x = self.canvas_width/2 - self.start_width/2
         self.start_y = self.canvas_height - 150
         self.start_text = "Start"
-        self.frame = simplegui.create_frame("Space Raider Game", self.canvas_width, self.canvas_height)
+        self.frame = frame
         self.game = Game(self.frame)
         self.frame.set_draw_handler(self.draw)
         self.frame.set_mouseclick_handler(self.click)
@@ -743,5 +816,100 @@ class Menu:
                 if not self.buttonDisabled:
                     self.buttonDisabled = True
                     self.game.runGame()
-        
-menu = Menu()
+
+                    
+backgroundMusic = simplegui.load_sound("https://aldvnian.github.io/Spaceshooter-sprites/stranger-things-124008.mp3")
+musicDuration = 156 * 1000
+
+def playMusic():
+    """Start background music playback"""
+    backgroundMusic.play()
+    timer.start()
+
+def restartMusic():
+    backgroundMusic.rewind()
+    backgroundMusic.play()
+    
+def pauseMusic():
+    backgroundMusic.pause()
+    timer.stop()
+
+timer = simplegui.create_timer(musicDuration, restartMusic)
+
+class Story:
+    """Intro story screen"""
+    def __init__(self):
+         self.canvasWidth = 800
+         self.canvasHeight = 650
+         self.backgroundUrl = "https://t3.ftcdn.net/jpg/01/94/53/22/360_F_194532293_5DQuTyT4ni7eCuVvifJgkMRNi92CoTjk.jpg"
+         self.background = simplegui.load_image(self.backgroundUrl)
+         self.title = "Space Raider Origin Story"
+         self.titleSize = 45
+         self.titleFont = "monospace"
+ 
+         self.storyText = [
+             "In the year 4035",
+             "The Aliens have invaded our universe",
+             "The Galactic Defense Federation is falling",
+             "You are humanity's last flame of hope",
+             "Pilot your trusty spaceship and save humanity from the aliens",
+             "and uncover the truth behind their invasion...",
+         ]
+         self.buttonWidth = 150
+         self.buttonHeight = 50
+         self.buttonX = (self.canvasWidth - self.buttonWidth) // 2
+         self.buttonY = 500
+         self.buttonText = "Play"
+         self.buttonTextSize = 32
+         
+         self.frame = simplegui.create_frame("Story", self.canvasWidth, self.canvasHeight)
+         self.frame.set_draw_handler(self.draw)
+         self.frame.set_mouseclick_handler(self.click)
+         playMusic()
+         
+    def draw(self, canvas):
+         if self.background.get_width() > 0:
+             canvas.draw_image(
+                 self.background, 
+                 (self.background.get_width()/2, self.background.get_height()/2), 
+                 (self.background.get_width(), self.background.get_height()), 
+                 (self.canvasWidth/2, self.canvasHeight/2), 
+                 (self.canvasWidth, self.canvasHeight)
+             )
+ 
+         
+         titleWidth = self.frame.get_canvas_textwidth(self.title, self.titleSize, self.titleFont)
+         canvas.draw_text(self.title, [(self.canvasWidth - titleWidth) // 2, 80], self.titleSize, "White", self.titleFont)
+ 
+         
+         yOffset = 200
+         for line in self.storyText:
+             textWidth = self.frame.get_canvas_textwidth(line, 20, "serif") + 20
+             canvas.draw_text(line, [(self.canvasWidth - textWidth) // 2, yOffset], 22, "White", "serif")
+             yOffset += 30
+ 
+             
+         canvas.draw_polygon(
+             [(self.buttonX, self.buttonY), (self.buttonX + self.buttonWidth, self.buttonY),
+              (self.buttonX + self.buttonWidth, self.buttonY + self.buttonHeight),
+              (self.buttonX, self.buttonY + self.buttonHeight)],
+             2, "White", "Gray"
+         )
+ 
+         
+         textWidth = self.frame.get_canvas_textwidth(self.buttonText, self.buttonTextSize, self.titleFont)
+         canvas.draw_text(self.buttonText,
+                  [(self.buttonX + (self.buttonWidth - textWidth) / 2), self.buttonY + (self.buttonHeight // 2) + (self.buttonTextSize // 3)],  
+                  self.buttonTextSize, "White", self.titleFont)
+ 
+    def click(self, pos):
+         x, y = pos
+         if (self.buttonX <= x <= self.buttonX + self.buttonWidth):
+            if (self.buttonY <= y <= self.buttonY + self.buttonHeight):
+                menu = Menu(self.frame)
+             
+ 
+ 
+ 
+StoryScreen = Story()
+StoryScreen.frame.start()
