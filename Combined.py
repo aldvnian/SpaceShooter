@@ -378,10 +378,6 @@ class Game:
         if self.stage == 5:
             self.loadEnemy((self.canvasWidth/2, -150), "https://aldvnian.github.io/Spaceshooter-sprites/craftpix-991101-free-pixel-art-enemy-spaceship-2d-sprites/PNG_Parts&Spriter_Animation/Ship5/Ship5.png",
                           math.pi/2, 10, (150, 150), True, -120)
-            self.frame.set_draw_handler(self.draw_handler)
-            self.frame.set_keydown_handler(self.keyboard.keyDown)
-            self.frame.set_keyup_handler(self.keyboard.keyUp)
-            self.frame.start()
             
     def enemyShoot(self, url):
         allShootersDead = True
@@ -617,15 +613,15 @@ class Game:
             if self.enemies[0].pos.get_p()[1] < 100:
                 self.enemies[0].pos.y += 1
             else:
-                self.clock += 4
+                self.clock += 6
                 enemy = self.enemies[0]
                 enemy.shield = False
                 right = self.enemies[0].pos.get_p()[0] + self.enemies[0].enemyWidthHeightDest[0]/2
                 left = self.enemies[0].pos.get_p()[0] - self.enemies[0].enemyWidthHeightDest[0]/2
                 if right >= self.canvasWidth:
-                    self.first = -4
+                    self.first = -6
                 if left <= 0:
-                    self.first = 4
+                    self.first = 6
                 self.enemies[0].pos.x += self.first
         elif self.stage == 6:
             self.score += 900
