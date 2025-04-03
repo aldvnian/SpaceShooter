@@ -249,11 +249,11 @@ class Boss(Enemy):
         bulletsRemoved = []
         for x in range(0, len(self.enemyBullets)):
             if x % 3 == 0:
-                self.enemyBullets[x].update((-1, 2))
-            elif (x - 1) % 4 == 0:
-                self.enemyBullets[x].update((0, 2))
+                self.enemyBullets[x].update((-2, 4))
+            elif (x - 1) % 3 == 0:
+                self.enemyBullets[x].update((0, 4))
             else:
-                self.enemyBullets[x].update((1, 2))
+                self.enemyBullets[x].update((2, 4))
             if self.enemyBullets[x].pos[1] > self.canvasHeight:
                 bulletsRemoved.append(self.enemyBullets[x])
         self.removeBullet(bulletsRemoved)
