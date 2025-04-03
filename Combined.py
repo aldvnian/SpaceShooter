@@ -110,7 +110,7 @@ class Bullet:
         
     def update(self, posAdder):
         """Update bullet position vertically"""
-        self.pos = (self.pos[0], self.pos[1] + posAdder)
+        self.pos = (self.pos[0] + posAdder[0], self.pos[1] + posAdder[1])
         
 class Player(Spaceship):
     """Player-controlled spaceship that can fire bullets"""
@@ -135,7 +135,7 @@ class Player(Spaceship):
         if self.shoot:
             for bullet in self.shots:
                 bullet.draw(canvas)
-                bullet.update(-4)
+                bullet.update((0, -4))
     
     def loadBullet(self):
         """Create new player bullet projectiles"""
@@ -212,7 +212,7 @@ class Enemy(Spaceship):
         """Update position and projectile states"""
         super().update()
         for bullet in self.enemyBullets:
-            bullet.update(4)
+            bullet.update((0, 4))
             if bullet.pos[1] > self.canvasHeight:
                 self.removeBullet(bullet)
                 
@@ -238,16 +238,24 @@ class Boss(Enemy):
         self.enemyBullets.append(newEnemyBullet3)
         
     def removeBullet(self, bullets):
-        for bullet in bullets:
-            self.enemyBullets.remove(bullet)
+        if isinstance(bullets, Bullet):
+            self.enemyBullets.remove(bullets)
+        else:
+            for bullet in bullets:
+                self.enemyBullets.remove(bullet)
             
     def update(self):
         Spaceship.update(self)
         bulletsRemoved = []
-        for bullet in self.enemyBullets:
-            bullet.update(4)
-            if bullet.pos[1] > self.canvasHeight:
-                bulletsRemoved.append(bullet)
+        for x in range(0, len(self.enemyBullets)):
+            if x % 3 == 0:
+                self.enemyBullets[x].update((-1, 2))
+            elif (x - 1) % 4 == 0:
+                self.enemyBullets[x].update((0, 2))
+            else:
+                self.enemyBullets[x].update((1, 2))
+            if self.enemyBullets[x].pos[1] > self.canvasHeight:
+                bulletsRemoved.append(self.enemyBullets[x])
         self.removeBullet(bulletsRemoved)
         
 
